@@ -1,0 +1,47 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+   background-image: url('html/media/2.png'); /* 실제 이미지 경로로 변경 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed; 
+  display: flex;
+  color: white;
+}
+
+.start-button {
+  position: absolute;
+  right: 40px;
+  bottom: 60px;
+  padding: 10px 28px;
+  font-size: 1.1rem;
+  color: #fff;
+  background: transparent;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+    text-decoration: none;
+}
+
+.back-button {
+  position: absolute;
+  left: 40px;
+  top: 60px;
+  padding: 10px 28px;
+  font-size: 1.1rem;
+  color: #fff;
+  background: transparent;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+    text-decoration: none;
+}
