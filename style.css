@@ -61,7 +61,7 @@ html, body {
 
 @media screen and (orientation: portrait) {
   body::before {
-    content: "이 웹페이지는 가로 모드에서 최적화되어 있습니다.\B기기를 돌려주세요.";
+    content: "가로 모드에서 최적화되어 있습니다. B기기를 돌려주세요.";
     white-space: pre;
     display: flex;
     justify-content: center;
