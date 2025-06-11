@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
    <link rel="stylesheet" href="style3.css">
   <style>
-
+ 
 
     #conveyor {
       position: absolute;
@@ -16,6 +16,7 @@
       width: 100vw;
       height: 120px;
       overflow: hidden;
+      white-space: nowrap;
     }
 
     .box {
@@ -26,15 +27,13 @@
       border-radius: 1px;
       position: absolute;
       top: 10px;
-      background-color: #111;
-      transition: left 0.07s linear;
+      background-color: #111; /* 항상 기본은 무채색 */
     }
 
     .show-color-type1 { background-color: red !important; }
     .show-color-type2 { background-color: green !important; }
     .show-color-type3 { background-color: blue !important; }
   </style>
-
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
@@ -42,7 +41,6 @@
   <div id="conveyor"></div>
 
   <script>
-    // ✅ Firebase 초기화
     const firebaseConfig = {
       apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
       authDomain: "interaction-lab-3-c4513.firebaseapp.com",
@@ -52,83 +50,53 @@
       messagingSenderId: "40397314576",
       appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const conveyor = document.getElementById('conveyor');
     const boxCount = 20;
-    const boxSpacing = 310;
-    const totalTrackLength = boxSpacing * boxCount;
-
-    const showColorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
-
+    const boxSpacing = 70 + 120 * 2;
     const boxes = [];
-    const previousLefts = new Array(boxCount).fill(null);
-    const currentData = new Array(boxCount).fill(null);
-    const colorQueue = [];
+    const colorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
 
-    // Firebase에서 outgoingColors 읽기
-    const outgoingColorsRef = db.ref('game/outgoingColors');
-    outgoingColorsRef.on('value', snapshot => {
-      const data = snapshot.val();
-      if (Array.isArray(data)) {
-        colorQueue.length = 0;
-        data.forEach(c => colorQueue.push(c));
-      }
-    });
-
-    // 박스 생성
+    // 박스 초기 생성 (색상 없음)
     for (let i = 0; i < boxCount; i++) {
       const box = document.createElement('div');
       box.classList.add('box');
+      box.style.left = (i * boxSpacing) + 'px';
       conveyor.appendChild(box);
       boxes.push(box);
     }
 
-    // Firebase 데이터 실시간으로 수신
+    // Firebase에서 박스 상태 수신
     db.ref('game/boxes').on('value', snapshot => {
       const data = snapshot.val();
       if (!data) return;
 
-      for (let i = 0; i < boxCount; i++) {
-        currentData[i] = data[i] || { left: 0, type: 'none' };
+      for (let i = 0; i < boxes.length; i++) {
+        const box = boxes[i];
+        const boxData = data[i];
+
+        if (boxData) {
+          // 위치 반영
+          box.style.left = boxData.left + 'px';
+
+          // 기존 색상 클래스 제거
+          box.classList.remove(...colorClasses);
+
+          // type에 따라 색상 부여
+          if (boxData.type === 'type1') {
+            box.classList.add('show-color-type1');
+          } else if (boxData.type === 'type2') {
+            box.classList.add('show-color-type2');
+          } else if (boxData.type === 'type3') {
+            box.classList.add('show-color-type3');
+          }
+          // type이 없거나 none이면 색상 안 줌 (기본 무채색 유지)
+        }
       }
     });
-
-    // 애니메이션 루프
-    function animate() {
-      for (let i = 0; i < boxCount; i++) {
-        const box = boxes[i];
-        const boxData = currentData[i];
-        if (!boxData) continue;
-
-        const mirroredLeft = totalTrackLength - boxData.left;
-        const prevLeft = previousLefts[i];
-
-        // 위치 이동
-        box.style.left = mirroredLeft + 'px';
-
-        // 색상 초기화
-        box.classList.remove(...showColorClasses);
-        box.style.backgroundColor = '#111';
-
-        // 재진입 감지 (왼쪽 → 오른쪽이므로 값 커짐)
-        if (prevLeft !== null && mirroredLeft > prevLeft) {
-          if (colorQueue.length > 0) {
-            const color = colorQueue.shift();
-            box.classList.add(`show-color-${color}`);
-            outgoingColorsRef.set(colorQueue);
-          }
-        }
-
-        previousLefts[i] = mirroredLeft;
-      }
-
-      requestAnimationFrame(animate);
-    }
-
-    animate(); // 시작
   </script>
 </body>
 </html>
-
