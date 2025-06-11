@@ -4,8 +4,13 @@
   <title>2P 화면</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <link rel="stylesheet" href="style3.css">
+   <link rel="stylesheet" href="style3.css">
   <style>
+    body {
+      margin: 0;
+      background: #fff;
+    }
+
     #conveyor {
       position: absolute;
       left: 50%;
@@ -16,6 +21,7 @@
       overflow: hidden;
       white-space: nowrap;
     }
+
     .box {
       width: 70px;
       height: 70px;
@@ -24,58 +30,75 @@
       border-radius: 1px;
       position: absolute;
       top: 10px;
+      background-color: #111; /* 기본 무채색 */
     }
-    .type1 { background-color: #111111; }
-    .type2 { background-color: #696969; }
-    .type3 { background-color: #DCDCDC; }
+
+    .show-color-type1 { background-color: red; }
+    .show-color-type2 { background-color: green; }
+    .show-color-type3 { background-color: blue; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-  apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
-  authDomain: "interaction-lab-3-c4513.firebaseapp.com",
-  databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
-  projectId: "interaction-lab-3-c4513",
-  storageBucket: "interaction-lab-3-c4513.firebasestorage.app",
-  messagingSenderId: "40397314576",
-  appId: "1:40397314576:web:b6bbbeb99fd43bda508895",
-  measurementId: "G-XKWS92QVP7"
-};
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-  </script>
 </head>
 <body>
-   <a class="back-button" href="About.html">뒤로가기</a>
-  <div class="buttons">
-    <a class="start-button" href="About.html">1</a>
-    <a class="start-button" href="About.html">2</a>
-    <a class="start-button" href="About.html">3</a>
-  </div>
   <div id="conveyor"></div>
-  <script>
-    const conveyor = document.getElementById('conveyor');
-    const types = ['type1', 'type2', 'type3'];
-    const boxElements = {};
 
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
+      authDomain: "interaction-lab-3-c4513.firebaseapp.com",
+      databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
+      projectId: "interaction-lab-3-c4513",
+      storageBucket: "interaction-lab-3-c4513.appspot.com",
+      messagingSenderId: "40397314576",
+      appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const conveyor = document.getElementById('conveyor');
+    const boxCount = 20; // 충분한 박스 수
+    const boxSpacing = 70 + 120 * 2;
+    const boxes = [];
+
+    const showColorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
+
+    // 박스 초기 생성
+    for (let i = 0; i < boxCount; i++) {
+      const box = document.createElement('div');
+      box.classList.add('box');
+      box.style.left = (i * boxSpacing) + 'px';
+      conveyor.appendChild(box);
+      boxes.push(box);
+    }
+
+    // Firebase에서 박스 상태 실시간 수신
     db.ref('game/boxes').on('value', snapshot => {
       const data = snapshot.val();
       if (!data) return;
 
-      Object.entries(data).forEach(([id, boxData]) => {
-        let box = boxElements[id];
-        if (!box) {
-          box = document.createElement('div');
-          box.classList.add('box');
-          conveyor.appendChild(box);
-          boxElements[id] = box;
-        }
+      for (let i = 0; i < boxes.length; i++) {
+        const box = boxes[i];
+        const boxData = data[i];
 
-        box.className = 'box'; // reset
-        box.classList.add(boxData.type);
-        box.style.left = boxData.left + 'px';
-      });
+        if (boxData) {
+          // 위치 적용
+          box.style.left = boxData.left + 'px';
+
+          // 기존 색상 제거
+          box.classList.remove(...showColorClasses);
+
+          // type에 맞는 색상 보여주기
+          if (boxData.type === 'type1') {
+            box.classList.add('show-color-type1');
+          } else if (boxData.type === 'type2') {
+            box.classList.add('show-color-type2');
+          } else if (boxData.type === 'type3') {
+            box.classList.add('show-color-type3');
+          }
+        }
+      }
     });
   </script>
 </body>
