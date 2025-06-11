@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <link rel="stylesheet" href="style3.css">
   <style>
+    
 
     #conveyor {
       position: absolute;
@@ -15,7 +16,6 @@
       width: 100vw;
       height: 120px;
       overflow: hidden;
-      white-space: nowrap;
     }
 
     .box {
@@ -54,22 +54,25 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const outgoingColorsRef = db.ref('game/outgoingColors');
 
-    // ✅ 기본 설정
     const conveyor = document.getElementById('conveyor');
     const boxCount = 20;
-    const boxWidth = 70;
     const boxSpacing = 310;
-    const screenWidth = window.innerWidth;
-    const speed = 5;
-
     const showColorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
-    const boxes = [];
-    const boxPositions = [];
-    const previousPositions = [];
 
-    let colorQueue = [];
+    const boxes = [];
+    const previousLefts = new Array(boxCount).fill(null);
+    const colorQueue = [];
+
+    // ✅ Firebase에서 outgoingColors 읽기
+    const outgoingColorsRef = db.ref('game/outgoingColors');
+    outgoingColorsRef.on('value', snapshot => {
+      const data = snapshot.val();
+      if (Array.isArray(data)) {
+        colorQueue.length = 0;
+        data.forEach(c => colorQueue.push(c));
+      }
+    });
 
     // ✅ 박스 생성
     for (let i = 0; i < boxCount; i++) {
@@ -77,44 +80,43 @@
       box.classList.add('box');
       conveyor.appendChild(box);
       boxes.push(box);
-      const startX = screenWidth + i * boxSpacing;
-      boxPositions.push(startX);
-      previousPositions.push(startX);
-      box.style.left = startX + 'px';
     }
 
-    // ✅ 색상 큐 업데이트
-    outgoingColorsRef.on('value', snapshot => {
-      const data = snapshot.val();
-      if (Array.isArray(data)) {
-        colorQueue = data;
-      }
-    });
-
-    // ✅ 애니메이션 루프
+    // ✅ 박스 위치 및 색상 업데이트 (15fps 기준)
     setInterval(() => {
-      for (let i = 0; i < boxCount; i++) {
-        previousPositions[i] = boxPositions[i];
-        boxPositions[i] -= speed;
+      db.ref('game/boxes').once('value').then(snapshot => {
+        const data = snapshot.val();
+        if (!data) return;
 
-        // 화면 왼쪽을 벗어난 경우 → 오른쪽에서 재진입
-        if (boxPositions[i] < -boxWidth) {
-          boxPositions[i] = screenWidth + boxSpacing;
+        for (let i = 0; i < boxCount; i++) {
+          const box = boxes[i];
+          const boxData = data[i];
+          if (!boxData) continue;
 
-          // 색상 큐에서 꺼내어 박스에 적용
-          boxes[i].classList.remove(...showColorClasses);
-          if (colorQueue.length > 0) {
-            const nextColor = colorQueue.shift();
-            boxes[i].classList.add(`show-color-${nextColor}`);
-            outgoingColorsRef.set(colorQueue);
-          } else {
-            boxes[i].style.backgroundColor = '#111';
+          const currentLeft = boxData.left;
+          const prevLeft = previousLefts[i];
+
+          // 위치 업데이트
+          box.style.left = currentLeft + 'px';
+
+          // 매 프레임 색상 초기화
+          box.classList.remove(...showColorClasses);
+          box.style.backgroundColor = '#111';
+
+          // 재진입 감지 (prev > current: 한 바퀴 돌아서 왼쪽 진입)
+          if (prevLeft !== null && prevLeft > currentLeft) {
+            if (colorQueue.length > 0) {
+              const color = colorQueue.shift(); // type1, type2, ...
+              box.classList.add(`show-color-${color}`);
+              // Firebase에 큐 반영
+              outgoingColorsRef.set(colorQueue);
+            }
           }
-        }
 
-        boxes[i].style.left = boxPositions[i] + 'px';
-      }
-    }, 1000 / 30); // 30fps
+          previousLefts[i] = currentLeft;
+        }
+      });
+    }, 1000 / 15);
   </script>
 </body>
 </html>
