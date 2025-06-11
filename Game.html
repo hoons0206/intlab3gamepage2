@@ -69,33 +69,41 @@
     }
 
     // Firebase에서 박스 상태 수신
-    db.ref('game/boxes').on('value', snapshot => {
-      const data = snapshot.val();
-      if (!data) return;
+    const delayMs = 1000; // 지연 시간 (예: 1초)
+const showColorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
 
-      for (let i = 0; i < boxes.length; i++) {
-        const box = boxes[i];
-        const boxData = data[i];
+db.ref('game/boxes').on('value', snapshot => {
+  const data = snapshot.val();
+  if (!data) return;
 
-        if (boxData) {
-          // 위치 반영
-          box.style.left = boxData.left + 'px';
+  const now = Date.now();
 
-          // 기존 색상 클래스 제거
-          box.classList.remove(...colorClasses);
+  for (let i = 0; i < boxes.length; i++) {
+    const box = boxes[i];
+    const boxData = data[i];
 
-          // type에 따라 색상 부여
-          if (boxData.type === 'type1') {
-            box.classList.add('show-color-type1');
-          } else if (boxData.type === 'type2') {
-            box.classList.add('show-color-type2');
-          } else if (boxData.type === 'type3') {
-            box.classList.add('show-color-type3');
-          }
-          // type이 없거나 none이면 색상 안 줌 (기본 무채색 유지)
+    if (boxData) {
+      // 위치 적용은 즉시
+      box.style.left = boxData.left + 'px';
+
+      // 색상 적용은 delay 후에만
+      const timePassed = now - (boxData.timestamp || 0);
+
+      box.classList.remove(...showColorClasses); // 색상 초기화
+
+      if (timePassed >= delayMs) {
+        if (boxData.type === 'type1') {
+          box.classList.add('show-color-type1');
+        } else if (boxData.type === 'type2') {
+          box.classList.add('show-color-type2');
+        } else if (boxData.type === 'type3') {
+          box.classList.add('show-color-type3');
         }
       }
-    });
+    }
+  }
+});
+
   </script>
 </body>
 </html>
