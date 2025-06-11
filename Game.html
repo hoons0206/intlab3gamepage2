@@ -7,6 +7,7 @@
    <link rel="stylesheet" href="style3.css">
   <style>
 
+
     #conveyor {
       position: absolute;
       left: 50%;
@@ -26,6 +27,7 @@
       position: absolute;
       top: 10px;
       background-color: #111;
+      transition: left 0.07s linear;
     }
 
     .show-color-type1 { background-color: red !important; }
@@ -50,7 +52,6 @@
       messagingSenderId: "40397314576",
       appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -63,6 +64,7 @@
 
     const boxes = [];
     const previousLefts = new Array(boxCount).fill(null);
+    const currentData = new Array(boxCount).fill(null);
     const colorQueue = [];
 
     // Firebase에서 outgoingColors 읽기
@@ -83,41 +85,50 @@
       boxes.push(box);
     }
 
-    // 박스 위치 및 색상 업데이트
-    setInterval(() => {
-      db.ref('game/boxes').once('value').then(snapshot => {
-        const data = snapshot.val();
-        if (!data) return;
+    // Firebase 데이터 실시간으로 수신
+    db.ref('game/boxes').on('value', snapshot => {
+      const data = snapshot.val();
+      if (!data) return;
 
-        for (let i = 0; i < boxCount; i++) {
-          const box = boxes[i];
-          const boxData = data[i];
-          if (!boxData) continue;
+      for (let i = 0; i < boxCount; i++) {
+        currentData[i] = data[i] || { left: 0, type: 'none' };
+      }
+    });
 
-          const currentLeft = boxData.left;
-          const mirroredLeft = totalTrackLength - currentLeft;
-          const prevLeft = previousLefts[i];
+    // 애니메이션 루프
+    function animate() {
+      for (let i = 0; i < boxCount; i++) {
+        const box = boxes[i];
+        const boxData = currentData[i];
+        if (!boxData) continue;
 
-          // 박스 위치 반영 (미러)
-          box.style.left = mirroredLeft + 'px';
+        const mirroredLeft = totalTrackLength - boxData.left;
+        const prevLeft = previousLefts[i];
 
-          // 매 프레임마다 색 초기화
-          box.classList.remove(...showColorClasses);
-          box.style.backgroundColor = '#111';
+        // 위치 이동
+        box.style.left = mirroredLeft + 'px';
 
-          // "재진입" 감지: 이전 > 현재 (반전 구조이므로 여전히 동일)
-          if (prevLeft !== null && prevLeft < mirroredLeft) {
-            if (colorQueue.length > 0) {
-              const color = colorQueue.shift();
-              box.classList.add(`show-color-${color}`);
-              outgoingColorsRef.set(colorQueue);
-            }
+        // 색상 초기화
+        box.classList.remove(...showColorClasses);
+        box.style.backgroundColor = '#111';
+
+        // 재진입 감지 (왼쪽 → 오른쪽이므로 값 커짐)
+        if (prevLeft !== null && mirroredLeft > prevLeft) {
+          if (colorQueue.length > 0) {
+            const color = colorQueue.shift();
+            box.classList.add(`show-color-${color}`);
+            outgoingColorsRef.set(colorQueue);
           }
-
-          previousLefts[i] = mirroredLeft;
         }
-      });
-    }, 1000 / 15);
+
+        previousLefts[i] = mirroredLeft;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate(); // 시작
   </script>
 </body>
 </html>
+
