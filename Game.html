@@ -4,11 +4,11 @@
   <title>2P 화면</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-   <link rel="stylesheet" href="style3.css">
+  <link rel="stylesheet" href="style3.css">
   <style>
     body {
       margin: 0;
-      background: #fff;
+      /* 배경 흰색 유지하거나 style3.css에서 배경 지정 가능 */
     }
 
     #conveyor {
@@ -31,6 +31,7 @@
       position: absolute;
       top: 10px;
       background-color: #111; /* 기본 무채색 */
+      transition: background-color 0.3s ease;
     }
 
     .show-color-type1 { background-color: red; }
@@ -44,6 +45,7 @@
   <div id="conveyor"></div>
 
   <script>
+    // Firebase 설정
     const firebaseConfig = {
       apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
       authDomain: "interaction-lab-3-c4513.firebaseapp.com",
@@ -58,10 +60,11 @@
     const db = firebase.database();
 
     const conveyor = document.getElementById('conveyor');
-    const boxCount = 20; // 충분한 박스 수
+    const boxCount = 20; // 적당한 박스 개수
     const boxSpacing = 70 + 120 * 2;
     const boxes = [];
 
+    // 버튼에 대응하는 색상 클래스 이름
     const showColorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
 
     // 박스 초기 생성
@@ -81,25 +84,27 @@
       for (let i = 0; i < boxes.length; i++) {
         const box = boxes[i];
         const boxData = data[i];
+        if (!boxData) continue;
 
-        if (boxData) {
-          // 위치 적용
+        // 위치 적용 (값이 있을 때만)
+        if (boxData.left !== undefined) {
           box.style.left = boxData.left + 'px';
+        }
 
-          // 기존 색상 제거
-          box.classList.remove(...showColorClasses);
+        // 기존 색상 클래스 제거
+        box.classList.remove(...showColorClasses);
 
-          // type에 맞는 색상 보여주기
-          if (boxData.type === 'type1') {
-            box.classList.add('show-color-type1');
-          } else if (boxData.type === 'type2') {
-            box.classList.add('show-color-type2');
-          } else if (boxData.type === 'type3') {
-            box.classList.add('show-color-type3');
-          }
+        // type에 맞는 색상 클래스 추가 (기본은 무채색)
+        if (boxData.type === 'type1') {
+          box.classList.add('show-color-type1');
+        } else if (boxData.type === 'type2') {
+          box.classList.add('show-color-type2');
+        } else if (boxData.type === 'type3') {
+          box.classList.add('show-color-type3');
         }
       }
     });
   </script>
 </body>
 </html>
+
