@@ -4,9 +4,11 @@
   <title>2P 화면</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="style3.css">
   <style>
-    
+    body {
+      margin: 0;
+      background: black;
+    }
 
     #conveyor {
       position: absolute;
@@ -58,13 +60,15 @@
     const conveyor = document.getElementById('conveyor');
     const boxCount = 20;
     const boxSpacing = 310;
+    const totalTrackLength = boxSpacing * boxCount;
+
     const showColorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
 
     const boxes = [];
     const previousLefts = new Array(boxCount).fill(null);
     const colorQueue = [];
 
-    // ✅ Firebase에서 outgoingColors 읽기
+    // Firebase에서 outgoingColors 읽기
     const outgoingColorsRef = db.ref('game/outgoingColors');
     outgoingColorsRef.on('value', snapshot => {
       const data = snapshot.val();
@@ -74,7 +78,7 @@
       }
     });
 
-    // ✅ 박스 생성
+    // 박스 생성
     for (let i = 0; i < boxCount; i++) {
       const box = document.createElement('div');
       box.classList.add('box');
@@ -82,7 +86,7 @@
       boxes.push(box);
     }
 
-    // ✅ 박스 위치 및 색상 업데이트 (15fps 기준)
+    // 박스 위치 및 색상 업데이트
     setInterval(() => {
       db.ref('game/boxes').once('value').then(snapshot => {
         const data = snapshot.val();
@@ -94,30 +98,29 @@
           if (!boxData) continue;
 
           const currentLeft = boxData.left;
+          const mirroredLeft = totalTrackLength - currentLeft;
           const prevLeft = previousLefts[i];
 
-          // 위치 업데이트
-          box.style.left = currentLeft + 'px';
+          // 박스 위치 반영 (미러)
+          box.style.left = mirroredLeft + 'px';
 
-          // 매 프레임 색상 초기화
+          // 매 프레임마다 색 초기화
           box.classList.remove(...showColorClasses);
           box.style.backgroundColor = '#111';
 
-          // 재진입 감지 (prev > current: 한 바퀴 돌아서 왼쪽 진입)
-          if (prevLeft !== null && prevLeft > currentLeft) {
+          // "재진입" 감지: 이전 > 현재 (반전 구조이므로 여전히 동일)
+          if (prevLeft !== null && prevLeft < mirroredLeft) {
             if (colorQueue.length > 0) {
-              const color = colorQueue.shift(); // type1, type2, ...
+              const color = colorQueue.shift();
               box.classList.add(`show-color-${color}`);
-              // Firebase에 큐 반영
               outgoingColorsRef.set(colorQueue);
             }
           }
 
-          previousLefts[i] = currentLeft;
+          previousLefts[i] = mirroredLeft;
         }
       });
     }, 1000 / 15);
   </script>
 </body>
 </html>
-
