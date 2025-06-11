@@ -68,42 +68,44 @@
     const showColorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
 
     // 박스 초기 생성
-    for (let i = 0; i < boxCount; i++) {
-      const box = document.createElement('div');
-      box.classList.add('box');
-      box.style.left = (i * boxSpacing) + 'px';
-      conveyor.appendChild(box);
-      boxes.push(box);
+   for (let i = 0; i < boxCount; i++) {
+  const box = document.createElement('div');
+  box.classList.add('box');
+  // 기본 배경색은 CSS에서 #111로 지정돼 있음
+  box.style.left = (i * boxSpacing) + 'px';
+  conveyor.appendChild(box);
+  boxes.push(box);
+}
+
+// Firebase에서 박스 상태 실시간 수신
+db.ref('game/boxes').on('value', snapshot => {
+  const data = snapshot.val();
+  if (!data) return;
+
+  for (let i = 0; i < boxes.length; i++) {
+    const box = boxes[i];
+    const boxData = data[i];
+    if (!boxData) continue;
+
+    // 위치 적용
+    if (boxData.left !== undefined) {
+      box.style.left = boxData.left + 'px';
     }
 
-    // Firebase에서 박스 상태 실시간 수신
-    db.ref('game/boxes').on('value', snapshot => {
-      const data = snapshot.val();
-      if (!data) return;
+    // 기존 색상 클래스 모두 제거
+    box.classList.remove(...showColorClasses);
 
-      for (let i = 0; i < boxes.length; i++) {
-        const box = boxes[i];
-        const boxData = data[i];
-        if (!boxData) continue;
-
-        // 위치 적용 (값이 있을 때만)
-        if (boxData.left !== undefined) {
-          box.style.left = boxData.left + 'px';
-        }
-
-        // 기존 색상 클래스 제거
-        box.classList.remove(...showColorClasses);
-
-        // type에 맞는 색상 클래스 추가 (기본은 무채색)
-        if (boxData.type === 'type1') {
-          box.classList.add('show-color-type1');
-        } else if (boxData.type === 'type2') {
-          box.classList.add('show-color-type2');
-        } else if (boxData.type === 'type3') {
-          box.classList.add('show-color-type3');
-        }
-      }
-    });
+    // type에 따라 색상 클래스 적용 (기본 무채색 유지)
+    if (boxData.type === 'type1') {
+      box.classList.add('show-color-type1');
+    } else if (boxData.type === 'type2') {
+      box.classList.add('show-color-type2');
+    } else if (boxData.type === 'type3') {
+      box.classList.add('show-color-type3');
+    }
+    // type이 없거나, 기본 타입이면 무채색(#111)이 유지됨
+  }
+});
   </script>
 </body>
 </html>
