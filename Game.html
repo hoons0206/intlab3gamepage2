@@ -4,11 +4,10 @@
   <title>2P 화면</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="style3.css">
   <style>
     body {
       margin: 0;
-      /* 배경 흰색 유지하거나 style3.css에서 배경 지정 가능 */
+      background: #fff;
     }
 
     #conveyor {
@@ -30,13 +29,12 @@
       border-radius: 1px;
       position: absolute;
       top: 10px;
-      background-color: #111; /* 기본 무채색 */
-      transition: background-color 0.3s ease;
+      background-color: #111; /* 항상 기본은 무채색 */
     }
 
-    .show-color-type1 { background-color: red; }
-    .show-color-type2 { background-color: green; }
-    .show-color-type3 { background-color: blue; }
+    .show-color-type1 { background-color: red !important; }
+    .show-color-type2 { background-color: green !important; }
+    .show-color-type3 { background-color: blue !important; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -45,7 +43,6 @@
   <div id="conveyor"></div>
 
   <script>
-    // Firebase 설정
     const firebaseConfig = {
       apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
       authDomain: "interaction-lab-3-c4513.firebaseapp.com",
@@ -60,52 +57,48 @@
     const db = firebase.database();
 
     const conveyor = document.getElementById('conveyor');
-    const boxCount = 20; // 적당한 박스 개수
+    const boxCount = 20;
     const boxSpacing = 70 + 120 * 2;
     const boxes = [];
+    const colorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
 
-    // 버튼에 대응하는 색상 클래스 이름
-    const showColorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
-
-    // 박스 초기 생성
-   for (let i = 0; i < boxCount; i++) {
-  const box = document.createElement('div');
-  box.classList.add('box');
-  // 기본 배경색은 CSS에서 #111로 지정돼 있음
-  box.style.left = (i * boxSpacing) + 'px';
-  conveyor.appendChild(box);
-  boxes.push(box);
-}
-
-// Firebase에서 박스 상태 실시간 수신
-db.ref('game/boxes').on('value', snapshot => {
-  const data = snapshot.val();
-  if (!data) return;
-
-  for (let i = 0; i < boxes.length; i++) {
-    const box = boxes[i];
-    const boxData = data[i];
-    if (!boxData) continue;
-
-    // 위치 적용
-    if (boxData.left !== undefined) {
-      box.style.left = boxData.left + 'px';
+    // 박스 초기 생성 (색상 없음)
+    for (let i = 0; i < boxCount; i++) {
+      const box = document.createElement('div');
+      box.classList.add('box');
+      box.style.left = (i * boxSpacing) + 'px';
+      conveyor.appendChild(box);
+      boxes.push(box);
     }
 
-    // 기존 색상 클래스 모두 제거
-    box.classList.remove(...showColorClasses);
+    // Firebase에서 박스 상태 수신
+    db.ref('game/boxes').on('value', snapshot => {
+      const data = snapshot.val();
+      if (!data) return;
 
-    // type에 따라 색상 클래스 적용 (기본 무채색 유지)
-    if (boxData.type === 'type1') {
-      box.classList.add('show-color-type1');
-    } else if (boxData.type === 'type2') {
-      box.classList.add('show-color-type2');
-    } else if (boxData.type === 'type3') {
-      box.classList.add('show-color-type3');
-    }
-    // type이 없거나, 기본 타입이면 무채색(#111)이 유지됨
-  }
-});
+      for (let i = 0; i < boxes.length; i++) {
+        const box = boxes[i];
+        const boxData = data[i];
+
+        if (boxData) {
+          // 위치 반영
+          box.style.left = boxData.left + 'px';
+
+          // 기존 색상 클래스 제거
+          box.classList.remove(...colorClasses);
+
+          // type에 따라 색상 부여
+          if (boxData.type === 'type1') {
+            box.classList.add('show-color-type1');
+          } else if (boxData.type === 'type2') {
+            box.classList.add('show-color-type2');
+          } else if (boxData.type === 'type3') {
+            box.classList.add('show-color-type3');
+          }
+          // type이 없거나 none이면 색상 안 줌 (기본 무채색 유지)
+        }
+      }
+    });
   </script>
 </body>
 </html>
