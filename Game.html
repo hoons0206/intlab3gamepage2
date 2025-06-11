@@ -96,33 +96,57 @@
         }
       }
     });
+const outgoingColorsRef = db.ref('game/outgoingColors');
 
-    // ✅ 화면에 지연된 위치와 색상 적용
-    setInterval(() => {
-      for (let i = 0; i < boxes.length; i++) {
-        const box = boxes[i];
-        const buffer = historyBuffer[i];
+let colorQueue = [];
 
-        if (buffer && buffer.length >= delayFrames) {
-          const delayed = buffer[0]; // 가장 오래된 프레임
+// 박스 생성 및 기본 세팅은 기존과 동일
 
-          // 위치 적용
-          box.style.left = delayed.left + 'px';
+// Firebase outgoingColors 변화 감지
+outgoingColorsRef.on('value', snapshot => {
+  const data = snapshot.val();
+  if (Array.isArray(data)) {
+    colorQueue = data;
+  }
+});
 
-          // 색상 초기화
-          box.classList.remove(...showColorClasses);
+// 매 프레임마다 왼쪽 끝 박스가 새로 등장할 때 큐에서 색상 꺼내 적용
+setInterval(() => {
+  // 1. 박스 위치 업데이트 (기존 데이터 받아서 바로 적용)
 
-          // 타입에 따른 색상 적용
-          if (delayed.type === 'type1') {
-            box.classList.add('show-color-type1');
-          } else if (delayed.type === 'type2') {
-            box.classList.add('show-color-type2');
-          } else if (delayed.type === 'type3') {
-            box.classList.add('show-color-type3');
-          }
-        }
+  db.ref('game/boxes').once('value').then(snapshot => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    for (let i = 0; i < boxes.length; i++) {
+      if (!data[i]) continue;
+      boxes[i].style.left = data[i].left + 'px';
+
+      // 색상은 기본 무채색으로 초기화
+      boxes[i].classList.remove(...showColorClasses);
+      boxes[i].dataset.type = 'none';
+    }
+
+    // 2. 맨 왼쪽 박스가 새로 등장하는 위치인지 체크해서 색상 큐에서 꺼내 적용
+    // 맨 왼쪽 박스가 화면 바깥(음수 x좌표)에서 움직여 들어오는 상황 감지
+    const leftmostBox = boxes.reduce((prev, curr) => {
+      return parseFloat(curr.style.left) < parseFloat(prev.style.left) ? curr : prev;
+    }, boxes[0]);
+
+    if (parseFloat(leftmostBox.style.left) <= 0) {
+      // 큐에 색상 있으면 적용, 없으면 무채색 유지
+      if (colorQueue.length > 0) {
+        const nextColor = colorQueue.shift();
+
+        leftmostBox.classList.add(`show-color-${nextColor}`);
+        leftmostBox.dataset.type = nextColor;
+
+        // 큐 업데이트 Firebase에 반영
+        outgoingColorsRef.set(colorQueue);
       }
-    }, 1000 / 15); // 15fps 렌더링
+    }
+  });
+}, 1000 / 15);
   </script>
 </body>
 </html>
