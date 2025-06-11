@@ -1,24 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Game</title>
-    <link rel="stylesheet" href="style3.css">
+  <title>2P 화면</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <style>
+    #conveyor {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 100vw;
+      height: 120px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .box {
+      width: 70px;
+      height: 70px;
+      margin: 10px 120px;
+      display: inline-block;
+      border-radius: 1px;
+      position: absolute;
+      top: 10px;
+    }
+    .type1 { background-color: #111111; }
+    .type2 { background-color: #696969; }
+    .type3 { background-color: #DCDCDC; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
 </head>
 <body>
+  <div id="conveyor"></div>
+  <script>
+    const conveyor = document.getElementById('conveyor');
+    const types = ['type1', 'type2', 'type3'];
+    const boxElements = {};
 
-    <a class="back-button" href="index.html">뒤로가기</a>
-    
-    <div class="intro">
-  <p>탈출하라!</p>
-  </div>
+    db.ref('game/boxes').on('value', snapshot => {
+      const data = snapshot.val();
+      if (!data) return;
 
-   <div class="background-image"></div>
+      Object.entries(data).forEach(([id, boxData]) => {
+        let box = boxElements[id];
+        if (!box) {
+          box = document.createElement('div');
+          box.classList.add('box');
+          conveyor.appendChild(box);
+          boxElements[id] = box;
+        }
 
-<a class="start-button" href="About.html">1</a>
-
-<a class="start-button" href="About.html">2</a>
-
-<a class="start-button" href="About.html">3</a>
-
+        box.className = 'box'; // reset
+        box.classList.add(boxData.type);
+        box.style.left = boxData.left + 'px';
+      });
+    });
+  </script>
 </body>
 </html>
