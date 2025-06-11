@@ -4,9 +4,9 @@
   <title>2P 화면</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-   <link rel="stylesheet" href="style3.css">
+  <link rel="stylesheet" href="style3.css">
   <style>
-
+    body { margin: 0; background: #000; }
     #conveyor {
       position: absolute;
       left: 50%;
@@ -33,6 +33,7 @@
     .show-color-type2 { background-color: green !important; }
     .show-color-type3 { background-color: blue !important; }
   </style>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
@@ -40,6 +41,7 @@
   <div id="conveyor"></div>
 
   <script>
+    // ✅ Firebase 초기화
     const firebaseConfig = {
       apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
       authDomain: "interaction-lab-3-c4513.firebaseapp.com",
@@ -53,13 +55,18 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // ✅ 화면 요소 준비
     const conveyor = document.getElementById('conveyor');
     const boxCount = 20;
     const boxSpacing = 70 + 120 * 2;
     const boxes = [];
-    const colorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
+    const showColorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
 
-    // 박스 초기 생성 (색상 없음)
+    // ✅ 히스토리 버퍼: 박스별로 delayFrames만큼의 과거 상태 저장
+    const historyBuffer = {};
+    const delayFrames = 15; // 1초 딜레이 (15fps 기준)
+
+    // ✅ 박스 생성
     for (let i = 0; i < boxCount; i++) {
       const box = document.createElement('div');
       box.classList.add('box');
@@ -68,42 +75,54 @@
       boxes.push(box);
     }
 
-    // Firebase에서 박스 상태 수신
-    const delayMs = 1000; // 지연 시간 (예: 1초)
-const showColorClasses = ['show-color-type1', 'show-color-type2', 'show-color-type3'];
+    // ✅ Firebase 실시간 데이터 수신 및 버퍼 저장
+    db.ref('game/boxes').on('value', snapshot => {
+      const data = snapshot.val();
+      if (!data) return;
 
-db.ref('game/boxes').on('value', snapshot => {
-  const data = snapshot.val();
-  if (!data) return;
+      for (let i = 0; i < boxes.length; i++) {
+        const boxData = data[i];
+        if (!boxData) continue;
 
-  const now = Date.now();
+        if (!historyBuffer[i]) historyBuffer[i] = [];
 
-  for (let i = 0; i < boxes.length; i++) {
-    const box = boxes[i];
-    const boxData = data[i];
+        historyBuffer[i].push({
+          left: boxData.left,
+          type: boxData.type
+        });
 
-    if (boxData) {
-      // 위치 적용은 즉시
-      box.style.left = boxData.left + 'px';
-
-      // 색상 적용은 delay 후에만
-      const timePassed = now - (boxData.timestamp || 0);
-
-      box.classList.remove(...showColorClasses); // 색상 초기화
-
-      if (timePassed >= delayMs) {
-        if (boxData.type === 'type1') {
-          box.classList.add('show-color-type1');
-        } else if (boxData.type === 'type2') {
-          box.classList.add('show-color-type2');
-        } else if (boxData.type === 'type3') {
-          box.classList.add('show-color-type3');
+        if (historyBuffer[i].length > delayFrames) {
+          historyBuffer[i].shift(); // 가장 오래된 데이터 제거
         }
       }
-    }
-  }
-});
+    });
 
+    // ✅ 화면에 지연된 위치와 색상 적용
+    setInterval(() => {
+      for (let i = 0; i < boxes.length; i++) {
+        const box = boxes[i];
+        const buffer = historyBuffer[i];
+
+        if (buffer && buffer.length >= delayFrames) {
+          const delayed = buffer[0]; // 가장 오래된 프레임
+
+          // 위치 적용
+          box.style.left = delayed.left + 'px';
+
+          // 색상 초기화
+          box.classList.remove(...showColorClasses);
+
+          // 타입에 따른 색상 적용
+          if (delayed.type === 'type1') {
+            box.classList.add('show-color-type1');
+          } else if (delayed.type === 'type2') {
+            box.classList.add('show-color-type2');
+          } else if (delayed.type === 'type3') {
+            box.classList.add('show-color-type3');
+          }
+        }
+      }
+    }, 1000 / 15); // 15fps 렌더링
   </script>
 </body>
 </html>
