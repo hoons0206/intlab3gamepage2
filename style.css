@@ -5,12 +5,15 @@
 }
 
 html, body {
-   width: 100dvh;
+  width: 100dvh;
   height: 100dvh;
-  background-color: #E61B1F; /* 필요에 따라 변경 */
-  display: inline-flex;
-  justify-content: right;
+  display: flex;
+  justify-content: left;
   position: relative;
+  color: white;
+ background-color: black;
+  overflow: hidden;
+    padding: env(safe-area-inset);
 }
 
 .background-image {
