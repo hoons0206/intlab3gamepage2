@@ -5,8 +5,8 @@
 }
 
 html, body {
-  width: 100%;
-  height: 100%;
+   width: 100dvh;
+  height: 100dvh;
   background-color: #E61B1F; /* 필요에 따라 변경 */
   display: inline-flex;
   justify-content: right;
@@ -69,8 +69,8 @@ html, body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+     width: 100dvh;
+  height: 100dvh;
     background: rgba(0, 0, 0, 0.9);
     color: #fff;
     font-size: 1.5rem;
@@ -137,8 +137,8 @@ body::after {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+   width: 100dvh;
+  height: 100dvh;
   pointer-events: none;
   z-index: 96;
 }
