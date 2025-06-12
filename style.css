@@ -87,3 +87,73 @@ html, body {
   }
 }
 
+@keyframes bloom {
+  0%, 100% { opacity: 0.08; }
+  50% { opacity: 0.25; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes press {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* 🔧 body 효과만 기존과 병합해서 재작성 */
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #1a1a1a;
+  color: white;
+  display: flex;
+  justify-content: left;
+  position: relative;
+  image-rendering: pixelated;
+
+}
+
+/* 🔧 CRT 수직 라인 효과 */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.05) 0,
+    rgba(255,255,255,0.05) 5px,
+    transparent 10px
+  );
+  pointer-events: none;
+  z-index: 98;
+}
+
+/* 🔧 CRT 프레임 효과 */
+.crt-frame {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 96;
+}
+
+/* 🔧 CRT 중심 발광 효과 */
+.crt-bloom {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 75%);
+  animation: bloom 6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 97;
+}
+
