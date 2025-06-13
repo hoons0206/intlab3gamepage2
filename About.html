@@ -1,22 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>About</title>
-    <link rel="stylesheet" href="style2.css">
- <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>About</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="style2.css">
 </head>
 <body>
-    
-    <a class="back-button" href="index.html">뒤로가기</a>
 
-    <div class="intro">
-  <p>탈출하라!</p>
+  <a class="back-button" href="index.html">뒤로가기</a>
+
+  <div class="intro">
+    <p id="typed-text"></p>
   </div>
 
-   <div class="background-image"></div>
+  <a class="start-button" href="Game.html">시작</a>
 
-<a class="start-button" href="Game.html">시작</a>
+  <div class="crt-bloom"></div>
+  <div class="crt-frame"></div>
+
+  <script>
+    const text = `악덕 사장의 열쇠 공장에 붙잡힌 두 인물은...\n몰래 열쇠를 만들어 도망칠 계획을 세우게 된다!\n서로 협력하여 열쇠를 만들고, 탈출에 성공하라!`;
+
+    const typedEl = document.getElementById("typed-text");
+    let idx = 0;
+
+    function typeNext() {
+      if (idx <= text.length) {
+        typedEl.innerHTML = text.slice(0, idx).replace(/\n/g, '<br>');
+        idx++;
+        setTimeout(typeNext, 60);
+      } else {
+        const button = document.querySelector('.start-button');
+        button.style.display = 'inline-block';
+        button.style.opacity = '0';
+        button.animate([
+          { opacity: 0 },
+          { opacity: 1 }
+        ], {
+          duration: 1000,
+          fill: 'forwards'
+        });
+      }
+    }
+
+    setTimeout(typeNext, 1000);
+  </script>
 
 </body>
 </html>
