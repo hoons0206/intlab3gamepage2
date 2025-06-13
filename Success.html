@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>About</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="style2.css">
+</head>
+<body>
+
+  <div class="intro">
+    <p id="typed-text"></p>
+  </div>
+
+  <a class="start-button" href="index.html">처음으로</a>
+
+  <div class="crt-bloom"></div>
+  <div class="crt-frame"></div>
+
+  <script>
+    const text = `탈출에 성공한 두 인물은...\n그동안의 자본으로 공장을 지어\n수많은 노동자들을 착취할 수 있게 되었습니다...`;
+
+    const typedEl = document.getElementById("typed-text");
+    let idx = 0;
+
+    function typeNext() {
+      if (idx <= text.length) {
+        typedEl.innerHTML = text.slice(0, idx).replace(/\n/g, '<br>');
+        idx++;
+        setTimeout(typeNext, 60);
+      } else {
+        const button = document.querySelector('.start-button');
+        button.style.display = 'inline-block';
+        button.style.opacity = '0';
+        button.animate([
+          { opacity: 0 },
+          { opacity: 1 }
+        ], {
+          duration: 1000,
+          fill: 'forwards'
+        });
+      }
+    }
+
+    setTimeout(typeNext, 1000);
+  </script>
+
+</body>
+</html>
