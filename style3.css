@@ -1,100 +1,136 @@
-html, body {
-  margin: 0;
-  padding: 0;
-   position: relative;
-  width: auto;
-  height: 100%;
-  background-color: black;
-  font-family: Arial, sans-serif;
-  overflow: hidden;
-}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>2P 화면</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="style3.css">
+  <style>
+    #conveyor {
+      position: absolute;
+      left: 0;
+      bottom: 50%;
+      width: 100vw;
+      height: 100px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .box {
+      width: 70px;
+      height: 70px;
+      margin: 10px 120px;
+      display: inline-block;
+      border-radius: 1px;
+      position: absolute;
+      top: 10px;
+      background-color: #111;
+    }
+    .show-color-type1 { background-color: red !important; }
+    .show-color-type2 { background-color: green !important; }
+    .show-color-type3 { background-color: blue !important; }
 
-/* 배경 고정 크기와 위치 */
-body {
-  background-image: url('html/media/belt.gif');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  position: relative;
-   top: 50%; left: 50%; transform: translate(-50%, -50%);
-}
+    #color-sequence-display {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.5rem;
+      color: white;
+      z-index: 10;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+  <a class="back-button" href="About.html">뒤로가기</a>
+  <div id="color-sequence-display">순서: 네모틀 → 세모틀 → 동그라미틀</div>
 
-/* 버튼 컨테이너를 우측 하단에 고정 */
-.buttons {
-  display: flex;
-  gap: 10px;
-  position: absolute;
-  bottom: 40px;
-  right: 40px;
-}
+  <div class="buttons">
+    <button class="start-button" data-type="type1">네모틀</button>
+    <button class="start-button" data-type="type2">세모틀</button>
+    <button class="start-button" data-type="type3">동그라미틀</button>
+  </div>
+  <div id="conveyor"></div>
 
-/* 각 버튼 스타일 */
-.start-button {
-  padding: 10px 28px;
-  font-size: 1.1rem;
-  color: #fff;
-  background: transparent;
-  border: 2px solid #fff;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  text-decoration: none;
-}
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
+      authDomain: "interaction-lab-3-c4513.firebaseapp.com",
+      databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
+      projectId: "interaction-lab-3-c4513",
+      storageBucket: "interaction-lab-3-c4513.appspot.com",
+      messagingSenderId: "40397314576",
+      appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-/* 뒤로가기 버튼 위치는 그대로 유지 */
-.back-button {
-  position: absolute;
-  left: 40px;
-  top: 20px;
-  padding: 10px 28px;
-  font-size: 1rem;
-  color: #fff;
-  background: transparent;
-  border: 2px solid #fff;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  text-decoration: none;
-}
+    const conveyor = document.getElementById('conveyor');
+    const boxes = [];
+    const speed = 3;
 
-#color-sequence-display {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 1.5rem;
-  color: white;
-  z-index: 10;
-}
+    const shapeSequence = ['type1', 'type2', 'type3'];
+    let currentIndex = 0;
 
+    // 도형 순서 표시 업데이트
+    function updateDisplay() {
+      const names = { type1: "네모틀", type2: "세모틀", type3: "동그라미틀" };
+      document.getElementById("color-sequence-display").innerText =
+        `순서: ${shapeSequence.map(t => names[t]).join(' → ')}`;
+    }
+    updateDisplay();
 
-/* 세로 모드일 때 경고창 */
-@media screen and (orientation: portrait) {
-  body::before {
-    content: "가로 모드에서 최적화되어 있습니다.\A기기를 돌려주세요.";
-    white-space: pre;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.9);
-    color: #fff;
-    font-size: 1.5rem;
-    z-index: 9999;
-    padding: 2rem;
-    box-sizing: border-box;
-    text-align: center;
-  }
+    // 박스 생성
+    function createBox(data) {
+      const box = document.createElement('div');
+      box.classList.add('box');
+      if (data.type === 'type1') box.classList.add('show-color-type1');
+      else if (data.type === 'type2') box.classList.add('show-color-type2');
+      else if (data.type === 'type3') box.classList.add('show-color-type3');
+      box.style.left = '-80px';
+      conveyor.appendChild(box);
+      boxes.push({ el: box, left: -80, type: data.type });
+    }
 
-  .buttons,
-  .back-button {
-    display: none !important;
-  }
-}
+    // Firebase 초기 불러오기
+    db.ref('game/2p_incomingBoxes').once('value').then(snapshot => {
+      snapshot.forEach(child => createBox(child.val()));
+    });
+
+    db.ref('game/2p_incomingBoxes').on('child_added', snapshot => {
+      createBox(snapshot.val());
+    });
+
+    // 애니메이션 루프
+    function animateBoxes() {
+      for (let i = 0; i < boxes.length; i++) {
+        const boxObj = boxes[i];
+        boxObj.left += speed;
+        boxObj.el.style.left = boxObj.left + 'px';
+      }
+      requestAnimationFrame(animateBoxes);
+    }
+    animateBoxes();
+
+    // 버튼 누르면 현재 순서와 비교
+    document.querySelectorAll('.start-button').forEach(button => {
+      button.addEventListener('click', e => {
+        e.preventDefault(); // 기본 제출 막기
+        const type = button.getAttribute('data-type');
+        if (type === shapeSequence[currentIndex]) {
+          currentIndex++;
+          if (currentIndex === shapeSequence.length) {
+            alert("성공! 올바른 순서입니다.");
+            currentIndex = 0; // 초기화 or 다음 단계로
+          }
+        } else {
+          alert("틀렸습니다! 처음부터 다시 시도하세요.");
+          currentIndex = 0;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+
