@@ -4,9 +4,17 @@
   <title>2P 화면</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="style3.css">
   <style>
-   #conveyor {
+    body {
+      margin: 0;
+      padding: 0;
+      background: #222;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    #conveyor {
       position: absolute;
       left: 0;
       bottom: 50%;
@@ -15,6 +23,7 @@
       overflow: hidden;
       white-space: nowrap;
     }
+
     .box {
       width: 70px;
       height: 70px;
@@ -25,9 +34,11 @@
       top: 10px;
       background-color: #111;
     }
+
     .show-color-type1 { background-color: red !important; }
     .show-color-type2 { background-color: green !important; }
     .show-color-type3 { background-color: blue !important; }
+
     .back-button {
       display: inline-block;
       margin: 10px;
@@ -37,20 +48,39 @@
       text-decoration: none;
       color: #222;
     }
+
+    .buttons {
+      margin-top: 180px;
+    }
+
+    .start-button {
+      padding: 12px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+    }
+
+    #color-sequence-display {
+      margin-top: 20px;
+      font-size: 20px;
+    }
   </style>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body>
 
   <a class="back-button" href="About.html">뒤로가기</a>
-  <div id="color-sequence-display"></div>
-<div class="buttons" style="text-align:center; margin-top: 20px;">
-  <button class="start-button" data-type="type1">네모틀</button>
-  <button class="start-button" data-type="type2">세모틀</button>
-  <button class="start-button" data-type="type3">동그라미틀</button>
-</div>
+  <div id="color-sequence-display">도형 순서: </div>
+
+  <div class="buttons">
+    <button class="start-button" data-type="type1">네모틀</button>
+    <button class="start-button" data-type="type2">세모틀</button>
+    <button class="start-button" data-type="type3">동그라미틀</button>
+  </div>
+
   <div id="conveyor"></div>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
@@ -66,31 +96,53 @@
 
     const conveyor = document.getElementById('conveyor');
     const boxes = [];
-    const speed = 3; // 1P와 동일하게 맞춤
+    const speed = 3;
 
-    // 기존 데이터도 모두 받아서 박스 생성
-    db.ref('game/2p_incomingBoxes').once('value').then(snapshot => {
-      snapshot.forEach(child => {
-        createBox(child.val());
-      });
-    });
+    const sequenceDisplay = document.getElementById("color-sequence-display");
+    const shapeSequence = ["type2", "type3", "type1"]; // 원하는 도형 순서
+    let currentShapeIndex = 0;
 
-    // 새 데이터가 들어오면 실시간으로 박스 생성
-    db.ref('game/2p_incomingBoxes').on('child_added', snapshot => {
-      createBox(snapshot.val());
-    });
+    function updateSequenceDisplay() {
+      const labels = {
+        type1: "🟥 네모",
+        type2: "🟩 세모",
+        type3: "🟦 동그라미"
+      };
+      sequenceDisplay.innerText = "도형 순서: " + shapeSequence.map(t => labels[t]).join(" → ");
+    }
+
+    updateSequenceDisplay();
 
     function createBox(data) {
       const box = document.createElement('div');
       box.classList.add('box');
-      if (data.type === 'type1') box.classList.add('show-color-type1');
-      else if (data.type === 'type2') box.classList.add('show-color-type2');
-      else if (data.type === 'type3') box.classList.add('show-color-type3');
+
+      // 초기 색은 내부적으로만 기억됨, 화면은 무채색
+      box.dataset.type = data.type;
+      updateBoxColor(box, data.type);
+
       box.style.left = '-80px';
       conveyor.appendChild(box);
       boxes.push({ el: box, left: -80 });
     }
 
+    function updateBoxColor(box, type) {
+      box.classList.remove("show-color-type1", "show-color-type2", "show-color-type3");
+      if (type === "type1") box.classList.add("show-color-type1");
+      if (type === "type2") box.classList.add("show-color-type2");
+      if (type === "type3") box.classList.add("show-color-type3");
+    }
+
+    // 기존 박스 불러오기
+    db.ref('game/2p_incomingBoxes').once('value').then(snapshot => {
+      snapshot.forEach(child => createBox(child.val()));
+    });
+
+    db.ref('game/2p_incomingBoxes').on('child_added', snapshot => {
+      createBox(snapshot.val());
+    });
+
+    // 애니메이션
     function animateBoxes() {
       for (let i = 0; i < boxes.length; i++) {
         const boxObj = boxes[i];
@@ -99,8 +151,38 @@
       }
       requestAnimationFrame(animateBoxes);
     }
+
     animateBoxes();
+
+    // 버튼 클릭 → 가장 앞 박스의 type 변경 + 순서 확인
+    document.querySelectorAll(".start-button").forEach(button => {
+      button.addEventListener("click", () => {
+        const selectedType = button.getAttribute("data-type");
+
+        // 가장 앞에 있는 박스 선택
+        const firstBox = boxes.find(b => b.left > 100); // 중앙 근처
+        if (!firstBox) return;
+
+        // 모양 변경
+        firstBox.el.dataset.type = selectedType;
+        updateBoxColor(firstBox.el, selectedType);
+
+        // 순서 확인
+        const expectedType = shapeSequence[currentShapeIndex];
+        if (selectedType === expectedType) {
+          currentShapeIndex++;
+          if (currentShapeIndex === shapeSequence.length) {
+            alert("성공! 다음 단계로!");
+            // 성공 처리 (예: 다음 페이지로 이동)
+          }
+        } else {
+      
+          window.location.href = "Fail.html";
+        }
+      });
+    });
   </script>
 </body>
 </html>
+
 
