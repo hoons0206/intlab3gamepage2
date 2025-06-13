@@ -19,6 +19,7 @@ body {
   justify-content: flex-end;
   align-items: flex-end;
   position: relative;
+   top: 50%; left: 50%; transform: translate(-50%, -50%);
 }
 
 /* 버튼 컨테이너를 우측 하단에 고정 */
