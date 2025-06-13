@@ -4,8 +4,12 @@
   <title>2P 화면</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="style3.css">
   <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #222;
+    }
     #conveyor {
       position: absolute;
       left: 50%;
@@ -16,7 +20,6 @@
       overflow: hidden;
       white-space: nowrap;
     }
-
     .box {
       width: 70px;
       height: 70px;
@@ -25,9 +28,8 @@
       border-radius: 1px;
       position: absolute;
       top: 10px;
-      background-color: #111; /* 기본 무채색 */
+      background-color: #111;
     }
-
     .show-color-type1 { background-color: red !important; }
     .show-color-type2 { background-color: green !important; }
     .show-color-type3 { background-color: blue !important; }
@@ -37,7 +39,6 @@
 </head>
 <body>
   <div id="conveyor"></div>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
@@ -48,64 +49,38 @@
       messagingSenderId: "40397314576",
       appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const conveyor = document.getElementById('conveyor');
     const boxes = [];
-    let orderedBoxes = [];
-    let started = false;
-    const delayBeforeStart = 8000; // 1P 박스 사라질 시간 고려
+    const speed = 3; // 1P와 동일하게 맞춤
 
-    // Firebase에서 박스 정보 수신
-    db.ref('game/boxes').on('value', snapshot => {
+    // 2P용 큐에서 박스 정보 실시간 수신
+    db.ref('game/2p_incomingBoxes').on('child_added', snapshot => {
       const data = snapshot.val();
-      if (!data) return;
-
-      orderedBoxes = Object.entries(data).sort((a, b) => {
-        return parseInt(a[1].timestamp) - parseInt(b[1].timestamp);
-      });
-
-      // 시작되지 않았다면 타이머 시작
-      if (!started && orderedBoxes.length > 0) {
-        setTimeout(() => {
-          started = true;
-        }, delayBeforeStart);
-      }
+      createBox(data);
     });
 
-    function createBox(id, data) {
+    function createBox(data) {
       const box = document.createElement('div');
       box.classList.add('box');
-
-      // 색상 클래스 부여
       if (data.type === 'type1') box.classList.add('show-color-type1');
       else if (data.type === 'type2') box.classList.add('show-color-type2');
       else if (data.type === 'type3') box.classList.add('show-color-type3');
-
       box.style.left = '-80px';
       conveyor.appendChild(box);
-
-      boxes.push({ el: box, left: -80, id });
+      boxes.push({ el: box, left: -80 });
     }
 
     function animateBoxes() {
-      if (started && boxes.length < orderedBoxes.length) {
-        const nextBoxEntry = orderedBoxes[boxes.length];
-        const [id, data] = nextBoxEntry;
-        createBox(id, data);
-      }
-
       for (let i = 0; i < boxes.length; i++) {
         const boxObj = boxes[i];
-        boxObj.left += 2;
+        boxObj.left += speed;
         boxObj.el.style.left = boxObj.left + 'px';
       }
-
       requestAnimationFrame(animateBoxes);
     }
-
     animateBoxes();
   </script>
 </body>
