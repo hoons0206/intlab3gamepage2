@@ -4,9 +4,8 @@
   <title>2P 화면</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-   <link rel="stylesheet" href="style3.css">
+  <link rel="stylesheet" href="style3.css">
   <style>
-
     #conveyor {
       position: absolute;
       left: 50%;
@@ -53,10 +52,16 @@
     const boxes = [];
     const speed = 3; // 1P와 동일하게 맞춤
 
-    // 2P용 큐에서 박스 정보 실시간 수신
+    // 기존 데이터도 모두 받아서 박스 생성
+    db.ref('game/2p_incomingBoxes').once('value').then(snapshot => {
+      snapshot.forEach(child => {
+        createBox(child.val());
+      });
+    });
+
+    // 새 데이터가 들어오면 실시간으로 박스 생성
     db.ref('game/2p_incomingBoxes').on('child_added', snapshot => {
-      const data = snapshot.val();
-      createBox(data);
+      createBox(snapshot.val());
     });
 
     function createBox(data) {
