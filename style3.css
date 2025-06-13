@@ -60,6 +60,17 @@ body {
   text-decoration: none;
 }
 
+#color-sequence-display {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.5rem;
+  color: white;
+  z-index: 10;
+}
+
+
 /* 세로 모드일 때 경고창 */
 @media screen and (orientation: portrait) {
   body::before {
