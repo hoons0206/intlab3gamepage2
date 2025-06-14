@@ -70,6 +70,11 @@ body {
   border: 2px solid #222;
   border-radius: 4px;
 }
+
+#shape-sequence-display .shape-block {
+  background-color: #111 !important;
+}
+
 .color-type1 { background-color: #FF5A5A; }
 .color-type2 { background-color: #FFD700; }
 .color-type3 { background-color: #5A8DFF; }
