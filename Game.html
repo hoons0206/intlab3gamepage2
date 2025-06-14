@@ -24,28 +24,16 @@
       position: absolute;
       top: 10px;
       background-color: #111;
-      transition: clip-path 0.3s ease, border-radius 0.3s ease;
+      border-radius: 1px;
     }
 
-    /* 색상 표현용 클래스 */
     .show-color-type1 { background-color: red !important; }
     .show-color-type2 { background-color: green !important; }
     .show-color-type3 { background-color: blue !important; }
 
-    /* 모양 표현용 클래스 */
-    .shape-square {
-      border-radius: 1px;
-      clip-path: none;
-    }
-
-    .shape-triangle {
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-    }
-
-    .shape-circle {
-      border-radius: 50%;
-      clip-path: none;
-    }
+    .shape-type1 { border-radius: 0%; clip-path: none; } /* 네모 */
+    .shape-type2 { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); } /* 세모 */
+    .shape-type3 { border-radius: 50%; } /* 동그라미 */
 
     .back-button {
       display: inline-block;
@@ -79,12 +67,11 @@
 <body>
 
   <a class="back-button" href="About.html">뒤로가기</a>
-  <div id="color-sequence-display"> </div>
+  <div id="color-sequence-display"></div>
 
   <div class="buttons">
-    <button class="start-button" data-shape="triangle">세모틀</button>
-    <button class="start-button" data-shape="circle">동그라미틀</button>
-    <button class="start-button" data-shape="square">네모틀</button>
+    <button class="start-button" data-shape="shape-type2" data-type="type2">세모틀</button>
+    <button class="start-button" data-shape="shape-type3" data-type="type3">동그라미틀</button>
   </div>
 
   <div id="conveyor"></div>
@@ -107,7 +94,7 @@
     const speed = 3;
 
     const sequenceDisplay = document.getElementById("color-sequence-display");
-    const shapeSequence = ["type2", "type3", "type1"]; // 정답 배열
+    const shapeSequence = ["type2", "type3", "type1"]; // 원하는 도형 순서
     let currentShapeIndex = 0;
 
     function updateSequenceDisplay() {
@@ -121,70 +108,33 @@
 
     updateSequenceDisplay();
 
-    let selectedShape = null;
-
-    document.querySelectorAll(".start-button").forEach(button => {
-      button.addEventListener("click", () => {
-        selectedShape = button.getAttribute("data-shape");
-        console.log("선택된 모양:", selectedShape);
-      });
-    });
-
-    function updateBoxColor(box, type) {
+    function updateBoxAppearance(box, type, shape) {
       box.classList.remove("show-color-type1", "show-color-type2", "show-color-type3");
+      box.classList.remove("shape-type1", "shape-type2", "shape-type3");
+
+      // 색
       if (type === "type1") box.classList.add("show-color-type1");
       if (type === "type2") box.classList.add("show-color-type2");
       if (type === "type3") box.classList.add("show-color-type3");
+
+      // 모양
+      if (shape) {
+        box.classList.add(shape);
+      } else {
+        box.classList.add("shape-type1"); // 기본은 네모
+      }
     }
 
     function createBox(data) {
       const box = document.createElement('div');
-      box.classList.add('box', 'shape-square'); // 기본 네모
+      box.classList.add('box');
 
-      const type = data.type;
-      box.dataset.type = type;
-
-      updateBoxColor(box, type);
+      box.dataset.type = data.type;
+      updateBoxAppearance(box, data.type);
 
       box.style.left = '-80px';
       conveyor.appendChild(box);
       boxes.push({ el: box, left: -80 });
-
-      box.addEventListener("click", () => {
-        if (!selectedShape) return;
-
-        // 모양 변경
-        box.classList.remove("shape-square", "shape-triangle", "shape-circle");
-
-        if (selectedShape === "triangle") {
-          box.classList.add("shape-triangle");
-        } else if (selectedShape === "circle") {
-          box.classList.add("shape-circle");
-        } else {
-          box.classList.add("shape-square");
-        }
-
-        // 정답 확인
-        const expectedType = shapeSequence[currentShapeIndex];
-        const shapeToType = {
-          "square": "type1",
-          "triangle": "type2",
-          "circle": "type3"
-        };
-        const chosenType = shapeToType[selectedShape];
-
-        if (chosenType === expectedType) {
-          currentShapeIndex++;
-          if (currentShapeIndex === shapeSequence.length) {
-            alert("정답입니다!");
-            currentShapeIndex = 0; // 초기화
-            updateSequenceDisplay();
-          }
-        } else {
-          // 틀리면 실패 페이지로
-          window.location.href = "Fail.html";
-        }
-      });
     }
 
     // 기존 박스 불러오기
@@ -192,26 +142,47 @@
       snapshot.forEach(child => createBox(child.val()));
     });
 
-    // 실시간 박스 수신
     db.ref('game/2p_incomingBoxes').on('child_added', snapshot => {
       createBox(snapshot.val());
     });
 
-    function animateBoxes() {
+    // 애니메이션 (setInterval 방식)
+    setInterval(() => {
       for (let i = 0; i < boxes.length; i++) {
-        const boxObj = boxes[i];
-        boxObj.left += speed;
-        boxObj.el.style.left = boxObj.left + 'px';
+        boxes[i].left += speed;
+        boxes[i].el.style.left = boxes[i].left + 'px';
       }
-      requestAnimationFrame(animateBoxes);
-    }
+    }, 1000 / 90);
 
-    animateBoxes();
+    // 틀 버튼 클릭 → 박스를 클릭하면 모양 적용
+    document.querySelectorAll(".start-button").forEach(button => {
+      button.addEventListener("click", () => {
+        const selectedShape = button.getAttribute("data-shape");
+        const selectedType = button.getAttribute("data-type");
+
+        conveyor.querySelectorAll(".box").forEach(box => {
+          box.onclick = () => {
+            const boxObj = boxes.find(b => b.el === box);
+            if (!boxObj) return;
+
+            box.dataset.shape = selectedShape;
+            updateBoxAppearance(box, box.dataset.type, selectedShape);
+
+            // 정답 확인
+            const expectedType = shapeSequence[currentShapeIndex];
+            if (box.dataset.type === expectedType && selectedType === expectedType) {
+              currentShapeIndex++;
+              if (currentShapeIndex === shapeSequence.length) {
+                alert("성공!");
+              }
+            } else {
+              window.location.href = "Fail.html";
+            }
+          };
+        });
+      });
+    });
   </script>
 </body>
 </html>
 
-    animateBoxes();
-  </script>
-</body>
-</html>
