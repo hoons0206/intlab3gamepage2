@@ -105,14 +105,15 @@
   }
 
   function displaySequence(seq) {
-    const display = document.getElementById('shape-sequence-display');
-    display.innerHTML = '';
-    seq.forEach(type => {
-      const div = document.createElement('div');
-      div.className = `shape-sequence-block shape-${type}`;
-      display.appendChild(div);
-    });
-  }
+  const display = document.getElementById('shape-sequence-display');
+  display.innerHTML = '';
+  seq.forEach(shape => {
+    const div = document.createElement('div');
+    div.className = `shape-block shape-${shape}`;
+    div.style.backgroundColor = '#111'; // 항상 검정
+    display.appendChild(div);
+  });
+}
 
   function resetSequence() {
     currentSequence = generateRandomSequence();
