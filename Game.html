@@ -15,25 +15,24 @@
       overflow: hidden;
       white-space: nowrap;
     }
-
     .box {
       width: 70px;
       height: 70px;
       margin: 10px 120px;
       display: inline-block;
+      border-radius: 1px;
       position: absolute;
       top: 10px;
       background-color: #111;
-      border-radius: 1px;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
     }
+    .shape-type1 { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); } /* triangle */
+    .shape-type2 { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } /* square */
+    .shape-type3 { clip-path: circle(50% at 50% 50%); } /* circle */
 
     .show-color-type1 { background-color: red !important; }
     .show-color-type2 { background-color: green !important; }
     .show-color-type3 { background-color: blue !important; }
-
-    .shape-type1 { border-radius: 0%; clip-path: none; } /* 네모 */
-    .shape-type2 { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); } /* 세모 */
-    .shape-type3 { border-radius: 50%; } /* 동그라미 */
 
     .back-button {
       display: inline-block;
@@ -44,38 +43,21 @@
       text-decoration: none;
       color: #222;
     }
-
-    .buttons {
-      margin-top: 180px;
+    .shape-sequence-block {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      margin: 4px;
+      border-radius: 4px;
     }
-
-    .start-button {
-      padding: 12px 20px;
-      margin: 0 10px;
-      font-size: 16px;
-    }
-
-    #color-sequence-display {
-      margin-top: 20px;
-      font-size: 20px;
-    }
+    .shape-type1 { background-color: red; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+    .shape-type2 { background-color: green; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+    .shape-type3 { background-color: blue; clip-path: circle(50% at 50% 50%); }
   </style>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-</head>
-<body>
-
-  <a class="back-button" href="About.html">뒤로가기</a>
-  <div id="color-sequence-display"></div>
-
-  <div class="buttons">
-    <button class="start-button" data-shape="shape-type2" data-type="type2">세모틀</button>
-    <button class="start-button" data-shape="shape-type3" data-type="type3">동그라미틀</button>
-  </div>
-
-  <div id="conveyor"></div>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
@@ -88,101 +70,117 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
-    const conveyor = document.getElementById('conveyor');
-    const boxes = [];
-    const speed = 3;
-
-    const sequenceDisplay = document.getElementById("color-sequence-display");
-    const shapeSequence = ["type2", "type3", "type1"]; // 원하는 도형 순서
-    let currentShapeIndex = 0;
-
-    function updateSequenceDisplay() {
-      const labels = {
-        type1: "네모",
-        type2: "세모",
-        type3: "동그라미"
-      };
-      sequenceDisplay.innerText = " " + shapeSequence.map(t => labels[t]).join(" → ");
-    }
-
-    updateSequenceDisplay();
-
-    function updateBoxAppearance(box, type, shape) {
-      box.classList.remove("show-color-type1", "show-color-type2", "show-color-type3");
-      box.classList.remove("shape-type1", "shape-type2", "shape-type3");
-
-      // 색
-      if (type === "type1") box.classList.add("show-color-type1");
-      if (type === "type2") box.classList.add("show-color-type2");
-      if (type === "type3") box.classList.add("show-color-type3");
-
-      // 모양
-      if (shape) {
-        box.classList.add(shape);
-      } else {
-        box.classList.add("shape-type1"); // 기본은 네모
-      }
-    }
-
-    function createBox(data) {
-      const box = document.createElement('div');
-      box.classList.add('box');
-
-      box.dataset.type = data.type;
-      updateBoxAppearance(box, data.type);
-
-      box.style.left = '-80px';
-      conveyor.appendChild(box);
-      boxes.push({ el: box, left: -80 });
-    }
-
-    // 기존 박스 불러오기
-    db.ref('game/2p_incomingBoxes').once('value').then(snapshot => {
-      snapshot.forEach(child => createBox(child.val()));
-    });
-
-    db.ref('game/2p_incomingBoxes').on('child_added', snapshot => {
-      createBox(snapshot.val());
-    });
-
-    // 애니메이션 (setInterval 방식)
-    setInterval(() => {
-      for (let i = 0; i < boxes.length; i++) {
-        boxes[i].left += speed;
-        boxes[i].el.style.left = boxes[i].left + 'px';
-      }
-    }, 1000 / 90);
-
-    // 틀 버튼 클릭 → 박스를 클릭하면 모양 적용
-    document.querySelectorAll(".start-button").forEach(button => {
-      button.addEventListener("click", () => {
-        const selectedShape = button.getAttribute("data-shape");
-        const selectedType = button.getAttribute("data-type");
-
-        conveyor.querySelectorAll(".box").forEach(box => {
-          box.onclick = () => {
-            const boxObj = boxes.find(b => b.el === box);
-            if (!boxObj) return;
-
-            box.dataset.shape = selectedShape;
-            updateBoxAppearance(box, box.dataset.type, selectedShape);
-
-            // 정답 확인
-            const expectedType = shapeSequence[currentShapeIndex];
-            if (box.dataset.type === expectedType && selectedType === expectedType) {
-              currentShapeIndex++;
-              if (currentShapeIndex === shapeSequence.length) {
-                alert("성공!");
-              }
-            } else {
-              window.location.href = "Fail.html";
-            }
-          };
-        });
-      });
-    });
   </script>
+</head>
+<body>
+<a class="back-button" href="About.html">뒤로가기</a>
+<div id="shape-sequence-display"></div>
+<div class="buttons" style="text-align:center; margin-top: 20px;">
+  <button class="start-button" data-type="type1">세모틀</button>
+  <button class="start-button" data-type="type2">네모틀</button>
+  <button class="start-button" data-type="type3">동글틀</button>
+</div>
+<div id="conveyor"></div>
+
+<script>
+  const conveyor = document.getElementById('conveyor');
+  const types = ['type1', 'type2', 'type3'];
+  const boxWidth = 70;
+  const speed = 3;
+  const frameRate = 1000 / 30;
+  const boxes = [];
+  let selectedType = null;
+
+  const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
+  const targetLength = 3;
+  let currentSequence = [];
+  let currentIndex = 0;
+
+  function generateRandomSequence() {
+    const seq = [];
+    for (let i = 0; i < targetLength; i++) {
+      seq.push(types[Math.floor(Math.random() * types.length)]);
+    }
+    return seq;
+  }
+
+  function displaySequence(seq) {
+    const display = document.getElementById('shape-sequence-display');
+    display.innerHTML = '';
+    seq.forEach(type => {
+      const div = document.createElement('div');
+      div.className = `shape-sequence-block shape-${type}`;
+      display.appendChild(div);
+    });
+  }
+
+  function resetSequence() {
+    currentSequence = generateRandomSequence();
+    currentIndex = 0;
+    displaySequence(currentSequence);
+  }
+
+  resetSequence();
+
+  document.querySelectorAll('.start-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedType = btn.dataset.type;
+    });
+  });
+
+  incomingBoxesRef.on('child_added', snapshot => {
+    const boxData = snapshot.val();
+    const boxId = snapshot.key;
+
+    const boxEl = document.createElement('div');
+    boxEl.classList.add('box');
+    boxEl.classList.add(`show-color-${boxData.type}`);
+    boxEl.style.left = '-70px';
+    conveyor.appendChild(boxEl);
+
+    const boxObj = {
+      id: boxId,
+      el: boxEl,
+      left: -70,
+      originalType: boxData.type,
+      currentType: null
+    };
+
+    boxEl.addEventListener('click', () => {
+      if (selectedType) {
+        boxEl.classList.remove('shape-type1', 'shape-type2', 'shape-type3');
+        boxEl.classList.add(`shape-${selectedType}`);
+        boxObj.currentType = selectedType;
+
+        if (selectedType === currentSequence[currentIndex]) {
+          currentIndex++;
+          if (currentIndex >= currentSequence.length) {
+            resetSequence();
+          }
+        } else {
+          window.location.href = 'Fail.html';
+        }
+      }
+    });
+
+    boxes.push(boxObj);
+  });
+
+  setInterval(() => {
+    for (let i = boxes.length - 1; i >= 0; i--) {
+      const box = boxes[i];
+      box.left += speed;
+      box.el.style.left = box.left + 'px';
+
+      if (box.left > window.innerWidth) {
+        if (!box.currentType) {
+          window.location.href = 'Fail.html';
+        }
+        box.el.remove();
+        boxes.splice(i, 1);
+      }
+    }
+  }, frameRate);
+</script>
 </body>
 </html>
-
