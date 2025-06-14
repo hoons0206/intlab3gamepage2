@@ -1,54 +1,177 @@
-<!-- 2P.html -->
 <!DOCTYPE html>
 <html>
 <head>
+  <title>2P 화면</title>
   <meta charset="UTF-8" />
-  <title>2P</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+   <link rel="stylesheet" href="style3.css">
+  <style>
+    #conveyor {
+      position: absolute;
+      left: 0;
+      bottom: 50%;
+      width: 100vw;
+      height: 100px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .box {
+      width: 70px;
+      height: 70px;
+      margin: 10px 120px;
+      display: inline-block;
+      border-radius: 1px;
+      position: absolute;
+      top: 10px;
+      background-color: #111;
+    }
+
+    .show-color-type1 { background-color: red !important; }
+    .show-color-type2 { background-color: green !important; }
+    .show-color-type3 { background-color: blue !important; }
+
+    .back-button {
+      display: inline-block;
+      margin: 10px;
+      padding: 8px 16px;
+      background: #eee;
+      border-radius: 6px;
+      text-decoration: none;
+      color: #222;
+    }
+
+    .buttons {
+      margin-top: 180px;
+    }
+
+    .start-button {
+      padding: 12px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+    }
+
+    #color-sequence-display {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+  </style>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <link rel="stylesheet" href="style3.css">
-
 </head>
 <body>
-  <div class="conveyor" id="conveyor"></div>
+
+  <a class="back-button" href="About.html">뒤로가기</a>
+  <div id="color-sequence-display"> </div>
+
+  <div class="buttons">
+   <button class="start-button" data-shape="triangle" data-type="type2">세모틀</button>
+<button class="start-button" data-shape="circle" data-type="type3">동그라미틀</button>
+
+  </div>
+
+  <div id="conveyor"></div>
 
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
-    authDomain: "interaction-lab-3-c4513.firebaseapp.com",
-    databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
-    projectId: "interaction-lab-3-c4513",
-    storageBucket: "interaction-lab-3-c4513.appspot.com",
-    messagingSenderId: "40397314576",
-    appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
+      authDomain: "interaction-lab-3-c4513.firebaseapp.com",
+      databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
+      projectId: "interaction-lab-3-c4513",
+      storageBucket: "interaction-lab-3-c4513.appspot.com",
+      messagingSenderId: "40397314576",
+      appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const conveyor = document.getElementById('conveyor');
-    const boxElements = {};
+    const boxes = [];
+    const speed = 3;
 
-    db.ref('boxes').on('child_added', (snapshot) => {
-      const data = snapshot.val();
-      const el = document.createElement('div');
-      el.classList.add('box', data.type, data.shape);
-      el.dataset.id = data.id;
-      el.style.left = data.x + 'px';
-      conveyor.appendChild(el);
-      boxElements[data.id] = { el, x: data.x };
-    });
+    const sequenceDisplay = document.getElementById("color-sequence-display");
+    const shapeSequence = ["type2", "type3", "type1"]; // 원하는 도형 순서
+    let currentShapeIndex = 0;
 
-    function animate() {
-      for (const id in boxElements) {
-        const obj = boxElements[id];
-        obj.x += 2; // 박스 이동 속도
-        obj.el.style.left = obj.x + 'px';
-      }
-      requestAnimationFrame(animate);
+    function updateSequenceDisplay() {
+      const labels = {
+        type1: "네모",
+        type2: "세모",
+        type3: "동그라미"
+      };
+      sequenceDisplay.innerText = " " + shapeSequence.map(t => labels[t]).join(" → ");
     }
 
-    animate();
+    updateSequenceDisplay();
+
+    function createBox(data) {
+      const box = document.createElement('div');
+      box.classList.add('box');
+
+      // 초기 색은 내부적으로만 기억됨, 화면은 무채색
+      box.dataset.type = data.type;
+      updateBoxColor(box, data.type);
+
+      box.style.left = '-80px';
+      conveyor.appendChild(box);
+      boxes.push({ el: box, left: -80 });
+    }
+
+    function updateBoxColor(box, type) {
+      box.classList.remove("show-color-type1", "show-color-type2", "show-color-type3");
+      if (type === "type1") box.classList.add("show-color-type1");
+      if (type === "type2") box.classList.add("show-color-type2");
+      if (type === "type3") box.classList.add("show-color-type3");
+    }
+
+    // 기존 박스 불러오기
+    db.ref('game/2p_incomingBoxes').once('value').then(snapshot => {
+      snapshot.forEach(child => createBox(child.val()));
+    });
+
+    db.ref('game/2p_incomingBoxes').on('child_added', snapshot => {
+      createBox(snapshot.val());
+    });
+
+    // 애니메이션
+    function animateBoxes() {
+      for (let i = 0; i < boxes.length; i++) {
+        const boxObj = boxes[i];
+        boxObj.left += speed;
+        boxObj.el.style.left = boxObj.left + 'px';
+      }
+      requestAnimationFrame(animateBoxes);
+    }
+
+    animateBoxes();
+
+    // 버튼 클릭 → 가장 앞 박스의 type 변경 + 순서 확인
+    document.querySelectorAll(".start-button").forEach(button => {
+      button.addEventListener("click", () => {
+        const selectedType = button.getAttribute("data-type");
+
+        // 가장 앞에 있는 박스 선택
+        const firstBox = boxes.find(b => b.left > 100); // 중앙 근처
+        if (!firstBox) return;
+
+        // 모양 변경
+        firstBox.el.dataset.type = selectedType;
+        updateBoxColor(firstBox.el, selectedType);
+
+        // 순서 확인
+        const expectedType = shapeSequence[currentShapeIndex];
+        if (selectedType === expectedType) {
+          currentShapeIndex++;
+          if (currentShapeIndex === shapeSequence.length) {
+          
+          }
+        } else {
+      
+          window.location.href = "Fail.html";
+        }
+      });
+    });
   </script>
 </body>
 </html>
-
