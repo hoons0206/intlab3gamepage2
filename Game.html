@@ -63,12 +63,11 @@
 <body>
 
   <a class="back-button" href="About.html">뒤로가기</a>
-  <div id="color-sequence-display">도형 순서: </div>
+  <div id="color-sequence-display"> </div>
 
   <div class="buttons">
    <button class="start-button" data-shape="triangle" data-type="type2">세모틀</button>
 <button class="start-button" data-shape="circle" data-type="type3">동그라미틀</button>
-<button class="start-button" data-shape="square" data-type="type1">네모틀</button>
 
   </div>
 
@@ -97,11 +96,11 @@
 
     function updateSequenceDisplay() {
       const labels = {
-        type1: "🟥 네모",
-        type2: "🟩 세모",
-        type3: "🟦 동그라미"
+        type1: "네모",
+        type2: "세모",
+        type3: "동그라미"
       };
-      sequenceDisplay.innerText = "도형 순서: " + shapeSequence.map(t => labels[t]).join(" → ");
+      sequenceDisplay.innerText = " " + shapeSequence.map(t => labels[t]).join(" → ");
     }
 
     updateSequenceDisplay();
@@ -165,8 +164,7 @@
         if (selectedType === expectedType) {
           currentShapeIndex++;
           if (currentShapeIndex === shapeSequence.length) {
-            alert("성공! 다음 단계로!");
-            // 성공 처리 (예: 다음 페이지로 이동)
+          
           }
         } else {
       
