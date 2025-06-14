@@ -83,6 +83,9 @@
 <div id="conveyor"></div>
 
 <script>
+  window.addEventListener("load", () => {
+  db.ref('game/2p_incomingBoxes').remove();
+});
   const conveyor = document.getElementById('conveyor');
   const types = ['type1', 'type2', 'type3'];
   const boxWidth = 70;
