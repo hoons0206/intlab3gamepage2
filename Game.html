@@ -48,17 +48,18 @@ onChildAdded(boxesRef, (data) => {
 
   const boxEl = document.createElement('div');
   boxEl.className = 'box show-color-' + boxData.type; // 색상 클래스 적용
-
   boxEl.dataset.type = boxData.type;
-  boxEl.style.left = '-70px';
+  let left = -70;
+  boxEl.style.left = left + 'px';
 
   conveyor.appendChild(boxEl);
 
   boxes.push({
     el: boxEl,
-    left: -70
+    left: left
   });
 });
+
 
 
   function animate() {
