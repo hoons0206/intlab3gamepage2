@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>2P 화면</title>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>2P Conveyor</title>
   <link rel="stylesheet" href="style3.css">
   <style>
+ 
     #conveyor {
       position: absolute;
       left: 0;
@@ -18,169 +19,87 @@
     .box {
       width: 70px;
       height: 70px;
-      margin: 10px 120px;
+      margin: 10px 120px; /* ✅ 1P와 동일하게 조정 */
       display: inline-block;
       border-radius: 1px;
       position: absolute;
       top: 10px;
       background-color: #111;
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+      color: white;
+      font-size: 12px;
+      text-align: center;
+      line-height: 70px;
     }
-    .shape-type1 { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); } /* triangle */
-    .shape-type2 { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } /* square */
-    .shape-type3 { clip-path: circle(50% at 50% 50%); } /* circle */
-
-    .show-color-type1 { background-color: red !important; }
-    .show-color-type2 { background-color: green !important; }
-    .show-color-type3 { background-color: blue !important; }
-
-    .back-button {
-      display: inline-block;
-      margin: 10px;
-      padding: 8px 16px;
-      background: #eee;
-      border-radius: 6px;
-      text-decoration: none;
-      color: #222;
-    }
-    .shape-sequence-block {
-      display: inline-block;
-      width: 40px;
-      height: 40px;
-      margin: 4px;
-      border-radius: 4px;
-    }
-    .shape-type1 { background-color: red; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
-    .shape-type2 { background-color: green; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
-    .shape-type3 { background-color: blue; clip-path: circle(50% at 50% 50%); }
   </style>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
-      authDomain: "interaction-lab-3-c4513.firebaseapp.com",
-      databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
-      projectId: "interaction-lab-3-c4513",
-      storageBucket: "interaction-lab-3-c4513.appspot.com",
-      messagingSenderId: "40397314576",
-      appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-  </script>
 </head>
 <body>
-<a class="back-button" href="About.html">뒤로가기</a>
-<div id="shape-sequence-display"></div>
-<div class="buttons" style="text-align:center; margin-top: 20px;">
-  <button class="start-button" data-type="type1">세모틀</button>
-  <button class="start-button" data-type="type2">네모틀</button>
-  <button class="start-button" data-type="type3">동글틀</button>
-</div>
-<div id="conveyor"></div>
 
-<script>
+<div class="conveyor" id="conveyor"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+  import { getDatabase, ref, onChildAdded } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBpRJbMp9-REDACTED",
+    authDomain: "twoplayergame-REDACTED.firebaseapp.com",
+    databaseURL: "https://twoplayergame-REDACTED.firebaseio.com",
+    projectId: "twoplayergame-REDACTED",
+    storageBucket: "twoplayergame-REDACTED.appspot.com",
+    messagingSenderId: "REDACTED",
+    appId: "REDACTED"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+  const boxesRef = ref(database, 'boxes');
+
   const conveyor = document.getElementById('conveyor');
-  const types = ['type1', 'type2', 'type3'];
-  const boxWidth = 70;
-  const speed = 3;
-  const frameRate = 1000 / 30;
   const boxes = [];
-  let selectedType = null;
 
-  const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
-  const targetLength = 3;
-  let currentSequence = [];
-  let currentIndex = 0;
+  // ✅ 속도 보정: 화면 크기에 따라 상대 속도 계산
+  const screenRatio = window.innerWidth / 375; // 기준 디바이스 너비: 375px
+  const speed = 3 * screenRatio;
 
-  function generateRandomSequence() {
-    const seq = [];
-    for (let i = 0; i < targetLength; i++) {
-      seq.push(types[Math.floor(Math.random() * types.length)]);
-    }
-    return seq;
-  }
-
-  function displaySequence(seq) {
-    const display = document.getElementById('shape-sequence-display');
-    display.innerHTML = '';
-    seq.forEach(type => {
-      const div = document.createElement('div');
-      div.className = `shape-sequence-block shape-${type}`;
-      display.appendChild(div);
-    });
-  }
-
-  function resetSequence() {
-    currentSequence = generateRandomSequence();
-    currentIndex = 0;
-    displaySequence(currentSequence);
-  }
-
-  resetSequence();
-
-  document.querySelectorAll('.start-button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedType = btn.dataset.type;
-    });
-  });
-
-  incomingBoxesRef.on('child_added', snapshot => {
-    const boxData = snapshot.val();
-    const boxId = snapshot.key;
+  onChildAdded(boxesRef, (data) => {
+    const boxData = data.val();
 
     const boxEl = document.createElement('div');
-    boxEl.classList.add('box');
-    boxEl.classList.add(`show-color-${boxData.type}`);
-    boxEl.style.left = '-70px';
+    boxEl.className = 'box';
+
+    // 내부 색상 저장
+    boxEl.dataset.type = boxData.type;
+
+    // 기본 외부 색상은 무채색
+    boxEl.style.backgroundColor = '#111';
+
+    // 시작 위치 왼쪽 밖
+    let left = -70;
+    boxEl.style.left = left + 'px';
+
+    // 선택적으로 좌표 표시 (디버그용)
+    // boxEl.innerText = boxData.type;
+
     conveyor.appendChild(boxEl);
 
-    const boxObj = {
-      id: boxId,
+    boxes.push({
       el: boxEl,
-      left: -70,
-      originalType: boxData.type,
-      currentType: null
-    };
-
-    boxEl.addEventListener('click', () => {
-      if (selectedType) {
-        boxEl.classList.remove('shape-type1', 'shape-type2', 'shape-type3');
-        boxEl.classList.add(`shape-${selectedType}`);
-        boxObj.currentType = selectedType;
-
-        if (selectedType === currentSequence[currentIndex]) {
-          currentIndex++;
-          if (currentIndex >= currentSequence.length) {
-            resetSequence();
-          }
-        } else {
-          window.location.href = 'Fail.html';
-        }
-      }
+      left: left
     });
-
-    boxes.push(boxObj);
   });
 
-  setInterval(() => {
-    for (let i = boxes.length - 1; i >= 0; i--) {
-      const box = boxes[i];
+  function animate() {
+    boxes.forEach((box, index) => {
       box.left += speed;
       box.el.style.left = box.left + 'px';
+    });
 
-      if (box.left > window.innerWidth) {
-        if (!box.currentType) {
-          window.location.href = 'Fail.html';
-        }
-        box.el.remove();
-        boxes.splice(i, 1);
-      }
-    }
-  }, frameRate);
+    requestAnimationFrame(animate);
+  }
+
+  animate();
 </script>
+
 </body>
 </html>
+
