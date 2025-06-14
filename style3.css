@@ -142,31 +142,33 @@ body {
     background-color: inherit;
   }
 
-  .shape-circle {
-    border-radius: 50%;
-    background-color: inherit;
-  }
-  
-    .conveyor {
-      position: absolute;
-      left: 0;
-      bottom: 40%;
-      width: 100vw;
-      height: 100px;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .box {
-      width: 70px;
-      height: 70px;
-      margin: 10px 120px; 
-      display: inline-block;
-      border-radius: 1px;
-      position: absolute;
-      top: 10px;
-      background-color: #403e3e;
-      color: white;
-      font-size: 12px;
-      text-align: center;
-      line-height: 70px;
-    }
+.shape-circle {
+  border-radius: 50%;
+  background-color: inherit;
+}
+
+.conveyor {
+  position: absolute;
+  left: 0;
+  bottom: 40%;
+  width: 100vw;
+  height: 100px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.box {
+  width: 70px;
+  height: 70px;
+  margin: 10px 120px;
+  display: inline-block;
+  border-radius: 1px;
+  position: absolute;
+  top: 10px;
+  background-color: #403e3e;
+  color: white;
+  font-size: 12px;
+  text-align: center;
+  line-height: 70px;
+}
+
