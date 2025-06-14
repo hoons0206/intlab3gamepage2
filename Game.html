@@ -83,9 +83,6 @@
 <div id="conveyor"></div>
 
 <script>
-  window.addEventListener("load", () => {
-  db.ref('game/2p_incomingBoxes').remove();
-});
   const conveyor = document.getElementById('conveyor');
   const types = ['type1', 'type2', 'type3'];
   const boxWidth = 70;
@@ -132,44 +129,49 @@
     });
   });
 
-  // ✅ 박스 수신 후 생성
-  incomingBoxesRef.on('child_added', snapshot => {
-    const boxData = snapshot.val();
-    const boxId = snapshot.key;
+  window.addEventListener("load", () => {
+  db.ref('game/2p_incomingBoxes').remove().then(() => {
+    // remove가 끝난 뒤에만 박스 수신 리스너 실행
+    incomingBoxesRef.on('child_added', snapshot => {
+      const boxData = snapshot.val();
+      const boxId = snapshot.key;
 
-    const boxEl = document.createElement('div');
-    boxEl.classList.add('box');
-    boxEl.classList.add(`show-color-${boxData.type}`);
-    boxEl.style.left = '-70px';
-    conveyor.appendChild(boxEl);
+      const boxEl = document.createElement('div');
+      boxEl.classList.add('box');
+      boxEl.classList.add(`show-color-${boxData.type}`);
+      boxEl.style.left = '-70px';
+      conveyor.appendChild(boxEl);
 
-    const boxObj = {
-      id: boxId,
-      el: boxEl,
-      left: -70,
-      originalType: boxData.type,
-      currentType: null
-    };
+      const boxObj = {
+        id: boxId,
+        el: boxEl,
+        left: -70,
+        originalType: boxData.type,
+        currentType: null
+      };
 
-    boxEl.addEventListener('click', () => {
-      if (selectedType) {
-        boxEl.classList.remove('shape-type1', 'shape-type2', 'shape-type3');
-        boxEl.classList.add(`shape-${selectedType}`);
-        boxObj.currentType = selectedType;
+      boxEl.addEventListener('click', () => {
+        if (selectedType) {
+          boxEl.classList.remove('shape-type1', 'shape-type2', 'shape-type3');
+          boxEl.classList.add(`shape-${selectedType}`);
+          boxObj.currentType = selectedType;
 
-        if (selectedType === currentSequence[currentIndex]) {
-          currentIndex++;
-          if (currentIndex >= currentSequence.length) {
-            resetSequence();
+          if (selectedType === currentSequence[currentIndex]) {
+            currentIndex++;
+            if (currentIndex >= currentSequence.length) {
+              resetSequence();
+            }
+          } else {
+            window.location.href = 'Fail.html';
           }
-        } else {
-          window.location.href = 'Fail.html';
         }
-      }
-    });
+      });
 
-    boxes.push(boxObj);
+      boxes.push(boxObj);
+    });
   });
+});
+
 
   // ✅ 박스 이동 루프
   setInterval(() => {
