@@ -59,7 +59,7 @@ body {
   display: flex;
   gap: 6px;
   z-index: 9999; /* 위로 올리기 */
-  background: rgba(255, 255, 255, 0.8); /* 잘림 방지를 위해 배경도 추가 가능 */
+   background: transparent; 
   padding: 2px;
   border-radius: 1px white;
 }
