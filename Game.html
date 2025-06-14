@@ -105,15 +105,15 @@
   }
 
   function displaySequence(seq) {
-  const display = document.getElementById('shape-sequence-display');
-  display.innerHTML = '';
-  seq.forEach(shape => {
-    const div = document.createElement('div');
-    div.className = `shape-block shape-${shape}`;
-    div.style.backgroundColor = '#111'; // 항상 검정
-    display.appendChild(div);
-  });
-}
+    const display = document.getElementById('shape-sequence-display');
+    display.innerHTML = '';
+    seq.forEach(shape => {
+      const div = document.createElement('div');
+      div.className = `shape-block shape-${shape}`;
+      div.style.backgroundColor = '#111'; // 항상 검정
+      display.appendChild(div);
+    });
+  }
 
   function resetSequence() {
     currentSequence = generateRandomSequence();
@@ -129,6 +129,7 @@
     });
   });
 
+  // ✅ 박스 수신 후 생성
   incomingBoxesRef.on('child_added', snapshot => {
     const boxData = snapshot.val();
     const boxId = snapshot.key;
@@ -167,6 +168,7 @@
     boxes.push(boxObj);
   });
 
+  // ✅ 박스 이동 루프
   setInterval(() => {
     for (let i = boxes.length - 1; i >= 0; i--) {
       const box = boxes[i];
