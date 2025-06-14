@@ -145,6 +145,7 @@ body {
   .shape-circle {
     border-radius: 50%;
     background-color: inherit;
+  }
   
     .conveyor {
       position: absolute;
