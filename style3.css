@@ -186,3 +186,11 @@ body {
   line-height: 70px;
 }
 
+ .box-img {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 10px;
+    left: 0;
+    image-rendering: pixelated;
+  }
