@@ -18,56 +18,52 @@
   <button class="start-button" data-type="type3">동그라미</button>
 </div>
   
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-  import { getDatabase, ref, onChildAdded } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-
+<!-- Firebase SDK - compat 방식으로 통일 -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
   const firebaseConfig = {
-      apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
-      authDomain: "interaction-lab-3-c4513.firebaseapp.com",
-      databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
-      projectId: "interaction-lab-3-c4513",
-      storageBucket: "interaction-lab-3-c4513.appspot.com",
-      messagingSenderId: "40397314576",
-      appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
-    };
+    apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
+    authDomain: "interaction-lab-3-c4513.firebaseapp.com",
+    databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
+    projectId: "interaction-lab-3-c4513",
+    storageBucket: "interaction-lab-3-c4513.appspot.com",
+    messagingSenderId: "40397314576",
+    appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
+  };
 
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
-  const boxesRef = ref(database, 'boxes');
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const boxesRef = db.ref('boxes');
 
   const conveyor = document.getElementById('conveyor');
   const boxes = [];
 
-  // ✅ 속도 보정: 화면 크기에 따라 상대 속도 계산
-  const screenRatio = window.innerWidth / 375; // 기준 디바이스 너비: 375px
+  const screenRatio = window.innerWidth / 375;
   const speed = 3 * screenRatio;
 
-onChildAdded(boxesRef, (data) => {
-  const boxData = data.val();
+  boxesRef.on('child_added', (data) => {
+    const boxData = data.val();
 
-  const boxEl = document.createElement('div');
-  boxEl.className = 'box show-color-' + boxData.type; // 색상 클래스 적용
-  boxEl.dataset.type = boxData.type;
-  let left = -70;
-  boxEl.style.left = left + 'px';
+    const boxEl = document.createElement('div');
+    boxEl.className = 'box';
+    boxEl.dataset.type = boxData.type;
+    boxEl.style.backgroundColor = '#111';
+    let left = -70;
+    boxEl.style.left = left + 'px';
+    conveyor.appendChild(boxEl);
 
-  conveyor.appendChild(boxEl);
-
-  boxes.push({
-    el: boxEl,
-    left: left
+    boxes.push({
+      el: boxEl,
+      left: left
+    });
   });
-});
-
-
 
   function animate() {
-    boxes.forEach((box, index) => {
+    boxes.forEach((box) => {
       box.left += speed;
       box.el.style.left = box.left + 'px';
     });
-
     requestAnimationFrame(animate);
   }
 
