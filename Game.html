@@ -6,30 +6,8 @@
   <title>2P</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <style>
-    body { background: black; overflow: hidden; }
-    .conveyor { position: relative; height: 100px; width: 100vw; background: #222; overflow: hidden; }
-    .box {
-      width: 70px; height: 70px;
-      position: absolute; top: 15px;
-      border-radius: 6px;
-      text-align: center;
-      line-height: 70px;
-      font-size: 16px; color: white;
-    }
-    .type1 { background-color: #FF5A5A; }
-    .type2 { background-color: #FFD700; color: black; }
-    .type3 { background-color: #5A8DFF; }
-    .shape-square { border-radius: 0; }
-    .shape-circle { border-radius: 50%; }
-    .shape-triangle {
-      width: 0; height: 0;
-      border-left: 35px solid transparent;
-      border-right: 35px solid transparent;
-      border-bottom: 70px solid currentColor;
-      background: none;
-    }
-  </style>
+  <link rel="stylesheet" href="style3.css">
+
 </head>
 <body>
   <div class="conveyor" id="conveyor"></div>
