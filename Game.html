@@ -82,8 +82,9 @@
   <div id="color-sequence-display"> </div>
 
   <div class="buttons">
-    <button class="start-button" data-shape="triangle" data-type="type2">세모틀</button>
-    <button class="start-button" data-shape="circle" data-type="type3">동그라미틀</button>
+    <button class="start-button" data-shape="triangle">세모틀</button>
+    <button class="start-button" data-shape="circle">동그라미틀</button>
+    <button class="start-button" data-shape="square">네모틀</button>
   </div>
 
   <div id="conveyor"></div>
@@ -106,7 +107,7 @@
     const speed = 3;
 
     const sequenceDisplay = document.getElementById("color-sequence-display");
-    const shapeSequence = ["type2", "type3", "type1"];
+    const shapeSequence = ["type2", "type3", "type1"]; // 정답 배열
     let currentShapeIndex = 0;
 
     function updateSequenceDisplay() {
@@ -138,10 +139,12 @@
 
     function createBox(data) {
       const box = document.createElement('div');
-      box.classList.add('box', 'shape-square'); // 기본은 네모
+      box.classList.add('box', 'shape-square'); // 기본 네모
 
-      box.dataset.type = data.type;
-      updateBoxColor(box, data.type);
+      const type = data.type;
+      box.dataset.type = type;
+
+      updateBoxColor(box, type);
 
       box.style.left = '-80px';
       conveyor.appendChild(box);
@@ -150,6 +153,7 @@
       box.addEventListener("click", () => {
         if (!selectedShape) return;
 
+        // 모양 변경
         box.classList.remove("shape-square", "shape-triangle", "shape-circle");
 
         if (selectedShape === "triangle") {
@@ -159,6 +163,27 @@
         } else {
           box.classList.add("shape-square");
         }
+
+        // 정답 확인
+        const expectedType = shapeSequence[currentShapeIndex];
+        const shapeToType = {
+          "square": "type1",
+          "triangle": "type2",
+          "circle": "type3"
+        };
+        const chosenType = shapeToType[selectedShape];
+
+        if (chosenType === expectedType) {
+          currentShapeIndex++;
+          if (currentShapeIndex === shapeSequence.length) {
+            alert("정답입니다!");
+            currentShapeIndex = 0; // 초기화
+            updateSequenceDisplay();
+          }
+        } else {
+          // 틀리면 실패 페이지로
+          window.location.href = "Fail.html";
+        }
       });
     }
 
@@ -167,6 +192,7 @@
       snapshot.forEach(child => createBox(child.val()));
     });
 
+    // 실시간 박스 수신
     db.ref('game/2p_incomingBoxes').on('child_added', snapshot => {
       createBox(snapshot.val());
     });
@@ -179,6 +205,11 @@
       }
       requestAnimationFrame(animateBoxes);
     }
+
+    animateBoxes();
+  </script>
+</body>
+</html>
 
     animateBoxes();
   </script>
