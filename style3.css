@@ -52,7 +52,7 @@ body {
   text-decoration: none;
 }
 
-#color-sequence-display {
+#shape-sequence-display {
   position: fixed; /* fixed로 고정 */
   top: 20px;
   right: 20px;
