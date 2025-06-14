@@ -36,6 +36,14 @@
 
 <div class="conveyor" id="conveyor"></div>
 
+  <a class="back-button" href="About.html">뒤로가기</a>
+<div id="color-sequence-display"></div>
+<div class="buttons" style="text-align:center; margin-top: 20px;">
+  <button class="start-button" data-type="type1">네모</button>
+  <button class="start-button" data-type="type2">세모</button>
+  <button class="start-button" data-type="type3">동그라미</button>
+</div>
+  
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
   import { getDatabase, ref, onChildAdded } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
