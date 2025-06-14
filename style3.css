@@ -137,6 +137,14 @@ body {
   }
 }
 
+.shape-block {
+  width: 40px;
+  height: 40px;
+  margin: 4px;
+  display: inline-block;
+  background-color: #111; /* 항상 검정 */
+}
+
   .shape-square {
     border-radius: 1px;
     clip-path: none;
