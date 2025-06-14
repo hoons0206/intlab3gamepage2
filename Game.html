@@ -1,76 +1,76 @@
+<!-- 2P.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>2P Conveyor</title>
-  <link rel="stylesheet" href="style3.css">
+  <meta charset="UTF-8" />
+  <title>2P</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    body { background: black; overflow: hidden; }
+    .conveyor { position: relative; height: 100px; width: 100vw; background: #222; overflow: hidden; }
+    .box {
+      width: 70px; height: 70px;
+      position: absolute; top: 15px;
+      border-radius: 6px;
+      text-align: center;
+      line-height: 70px;
+      font-size: 16px; color: white;
+    }
+    .type1 { background-color: #FF5A5A; }
+    .type2 { background-color: #FFD700; color: black; }
+    .type3 { background-color: #5A8DFF; }
+    .shape-square { border-radius: 0; }
+    .shape-circle { border-radius: 50%; }
+    .shape-triangle {
+      width: 0; height: 0;
+      border-left: 35px solid transparent;
+      border-right: 35px solid transparent;
+      border-bottom: 70px solid currentColor;
+      background: none;
+    }
+  </style>
 </head>
 <body>
+  <div class="conveyor" id="conveyor"></div>
 
-<div class="conveyor" id="conveyor"></div>
-
-
-  <a class="back-button" href="About.html">뒤로가기</a>
-<div id="color-sequence-display"></div>
-<div class="buttons" style="text-align:center; margin-top: 20px;">
-  <button class="start-button" data-type="type1">네모</button>
-  <button class="start-button" data-type="type2">세모</button>
-  <button class="start-button" data-type="type3">동그라미</button>
-</div>
-  
-<!-- Firebase SDK - compat 방식으로 통일 -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
     authDomain: "interaction-lab-3-c4513.firebaseapp.com",
     databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
     projectId: "interaction-lab-3-c4513",
     storageBucket: "interaction-lab-3-c4513.appspot.com",
     messagingSenderId: "40397314576",
     appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
-  };
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const boxesRef = db.ref('boxes');
+    const conveyor = document.getElementById('conveyor');
+    const boxElements = {};
 
-  const conveyor = document.getElementById('conveyor');
-  const boxes = [];
-
-  const screenRatio = window.innerWidth / 375;
-  const speed = 3 * screenRatio;
-
-  boxesRef.on('child_added', (data) => {
-    const boxData = data.val();
-
-    const boxEl = document.createElement('div');
-    boxEl.className = 'box';
-    boxEl.dataset.type = boxData.type;
-    boxEl.style.backgroundColor = '#111';
-    let left = -70;
-    boxEl.style.left = left + 'px';
-    conveyor.appendChild(boxEl);
-
-    boxes.push({
-      el: boxEl,
-      left: left
+    db.ref('boxes').on('child_added', (snapshot) => {
+      const data = snapshot.val();
+      const el = document.createElement('div');
+      el.classList.add('box', data.type, data.shape);
+      el.dataset.id = data.id;
+      el.style.left = data.x + 'px';
+      conveyor.appendChild(el);
+      boxElements[data.id] = { el, x: data.x };
     });
-  });
 
-  function animate() {
-    boxes.forEach((box) => {
-      box.left += speed;
-      box.el.style.left = box.left + 'px';
-    });
-    requestAnimationFrame(animate);
-  }
+    function animate() {
+      for (const id in boxElements) {
+        const obj = boxElements[id];
+        obj.x += 2; // 박스 이동 속도
+        obj.el.style.left = obj.x + 'px';
+      }
+      requestAnimationFrame(animate);
+    }
 
-  animate();
-</script>
-
+    animate();
+  </script>
 </body>
 </html>
 
