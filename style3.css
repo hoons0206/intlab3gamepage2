@@ -149,7 +149,7 @@ body {
     .conveyor {
       position: absolute;
       left: 0;
-      bottom: 50%;
+      bottom: 40%;
       width: 100vw;
       height: 100px;
       overflow: hidden;
