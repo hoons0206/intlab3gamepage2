@@ -4,7 +4,7 @@
   <title>2P 화면</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-   <link rel="stylesheet" href="style3.css">
+  <link rel="stylesheet" href="style3.css">
   <style>
     #conveyor {
       position: absolute;
@@ -15,7 +15,6 @@
       overflow: hidden;
       white-space: nowrap;
     }
-
     .box {
       width: 70px;
       height: 70px;
@@ -25,7 +24,11 @@
       position: absolute;
       top: 10px;
       background-color: #111;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
     }
+    .shape-type1 { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); } /* triangle */
+    .shape-type2 { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } /* square */
+    .shape-type3 { clip-path: circle(50% at 50% 50%); } /* circle */
 
     .show-color-type1 { background-color: red !important; }
     .show-color-type2 { background-color: green !important; }
@@ -40,39 +43,21 @@
       text-decoration: none;
       color: #222;
     }
-
-    .buttons {
-      margin-top: 180px;
+    .shape-sequence-block {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      margin: 4px;
+      border-radius: 4px;
     }
-
-    .start-button {
-      padding: 12px 20px;
-      margin: 0 10px;
-      font-size: 16px;
-    }
-
-    #color-sequence-display {
-      margin-top: 20px;
-      font-size: 20px;
-    }
+    .shape-type1 { background-color: red; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+    .shape-type2 { background-color: green; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+    .shape-type3 { background-color: blue; clip-path: circle(50% at 50% 50%); }
   </style>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-</head>
-<body>
-
-  <a class="back-button" href="About.html">뒤로가기</a>
-  <div id="color-sequence-display"> </div>
-
-  <div class="buttons">
-   <button class="start-button" data-shape="triangle" data-type="type2">세모틀</button>
-<button class="start-button" data-shape="circle" data-type="type3">동그라미틀</button>
-
-  </div>
-
-  <div id="conveyor"></div>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
@@ -85,93 +70,117 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+  </script>
+</head>
+<body>
+<a class="back-button" href="About.html">뒤로가기</a>
+<div id="shape-sequence-display"></div>
+<div class="buttons" style="text-align:center; margin-top: 20px;">
+  <button class="start-button" data-type="type1">세모틀</button>
+  <button class="start-button" data-type="type2">네모틀</button>
+  <button class="start-button" data-type="type3">동글틀</button>
+</div>
+<div id="conveyor"></div>
 
-    const conveyor = document.getElementById('conveyor');
-    const boxes = [];
-    const speed = 3;
+<script>
+  const conveyor = document.getElementById('conveyor');
+  const types = ['type1', 'type2', 'type3'];
+  const boxWidth = 70;
+  const speed = 3;
+  const frameRate = 1000 / 30;
+  const boxes = [];
+  let selectedType = null;
 
-    const sequenceDisplay = document.getElementById("color-sequence-display");
-    const shapeSequence = ["type2", "type3", "type1"]; // 원하는 도형 순서
-    let currentShapeIndex = 0;
+  const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
+  const targetLength = 3;
+  let currentSequence = [];
+  let currentIndex = 0;
 
-    function updateSequenceDisplay() {
-      const labels = {
-        type1: "네모",
-        type2: "세모",
-        type3: "동그라미"
-      };
-      sequenceDisplay.innerText = " " + shapeSequence.map(t => labels[t]).join(" → ");
+  function generateRandomSequence() {
+    const seq = [];
+    for (let i = 0; i < targetLength; i++) {
+      seq.push(types[Math.floor(Math.random() * types.length)]);
     }
+    return seq;
+  }
 
-    updateSequenceDisplay();
-
-    function createBox(data) {
-      const box = document.createElement('div');
-      box.classList.add('box');
-
-      // 초기 색은 내부적으로만 기억됨, 화면은 무채색
-      box.dataset.type = data.type;
-      updateBoxColor(box, data.type);
-
-      box.style.left = '-80px';
-      conveyor.appendChild(box);
-      boxes.push({ el: box, left: -80 });
-    }
-
-    function updateBoxColor(box, type) {
-      box.classList.remove("show-color-type1", "show-color-type2", "show-color-type3");
-      if (type === "type1") box.classList.add("show-color-type1");
-      if (type === "type2") box.classList.add("show-color-type2");
-      if (type === "type3") box.classList.add("show-color-type3");
-    }
-
-    // 기존 박스 불러오기
-    db.ref('game/2p_incomingBoxes').once('value').then(snapshot => {
-      snapshot.forEach(child => createBox(child.val()));
+  function displaySequence(seq) {
+    const display = document.getElementById('shape-sequence-display');
+    display.innerHTML = '';
+    seq.forEach(type => {
+      const div = document.createElement('div');
+      div.className = `shape-sequence-block shape-${type}`;
+      display.appendChild(div);
     });
+  }
 
-    db.ref('game/2p_incomingBoxes').on('child_added', snapshot => {
-      createBox(snapshot.val());
+  function resetSequence() {
+    currentSequence = generateRandomSequence();
+    currentIndex = 0;
+    displaySequence(currentSequence);
+  }
+
+  resetSequence();
+
+  document.querySelectorAll('.start-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedType = btn.dataset.type;
     });
+  });
 
-    // 애니메이션
-    function animateBoxes() {
-      for (let i = 0; i < boxes.length; i++) {
-        const boxObj = boxes[i];
-        boxObj.left += speed;
-        boxObj.el.style.left = boxObj.left + 'px';
-      }
-      requestAnimationFrame(animateBoxes);
-    }
+  incomingBoxesRef.on('child_added', snapshot => {
+    const boxData = snapshot.val();
+    const boxId = snapshot.key;
 
-    animateBoxes();
+    const boxEl = document.createElement('div');
+    boxEl.classList.add('box');
+    boxEl.classList.add(`show-color-${boxData.type}`);
+    boxEl.style.left = '-70px';
+    conveyor.appendChild(boxEl);
 
-    // 버튼 클릭 → 가장 앞 박스의 type 변경 + 순서 확인
-    document.querySelectorAll(".start-button").forEach(button => {
-      button.addEventListener("click", () => {
-        const selectedType = button.getAttribute("data-type");
+    const boxObj = {
+      id: boxId,
+      el: boxEl,
+      left: -70,
+      originalType: boxData.type,
+      currentType: null
+    };
 
-        // 가장 앞에 있는 박스 선택
-        const firstBox = boxes.find(b => b.left > 100); // 중앙 근처
-        if (!firstBox) return;
+    boxEl.addEventListener('click', () => {
+      if (selectedType) {
+        boxEl.classList.remove('shape-type1', 'shape-type2', 'shape-type3');
+        boxEl.classList.add(`shape-${selectedType}`);
+        boxObj.currentType = selectedType;
 
-        // 모양 변경
-        firstBox.el.dataset.type = selectedType;
-        updateBoxColor(firstBox.el, selectedType);
-
-        // 순서 확인
-        const expectedType = shapeSequence[currentShapeIndex];
-        if (selectedType === expectedType) {
-          currentShapeIndex++;
-          if (currentShapeIndex === shapeSequence.length) {
-          
+        if (selectedType === currentSequence[currentIndex]) {
+          currentIndex++;
+          if (currentIndex >= currentSequence.length) {
+            resetSequence();
           }
         } else {
-      
-          window.location.href = "Fail.html";
+          window.location.href = 'Fail.html';
         }
-      });
+      }
     });
-  </script>
+
+    boxes.push(boxObj);
+  });
+
+  setInterval(() => {
+    for (let i = boxes.length - 1; i >= 0; i--) {
+      const box = boxes[i];
+      box.left += speed;
+      box.el.style.left = box.left + 'px';
+
+      if (box.left > window.innerWidth) {
+        if (!box.currentType) {
+          window.location.href = 'Fail.html';
+        }
+        box.el.remove();
+        boxes.splice(i, 1);
+      }
+    }
+  }, frameRate);
+</script>
 </body>
 </html>
