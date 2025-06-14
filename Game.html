@@ -43,32 +43,23 @@
   const screenRatio = window.innerWidth / 375; // 기준 디바이스 너비: 375px
   const speed = 3 * screenRatio;
 
-  onChildAdded(boxesRef, (data) => {
-    const boxData = data.val();
+onChildAdded(boxesRef, (data) => {
+  const boxData = data.val();
 
-    const boxEl = document.createElement('div');
-    boxEl.className = 'box';
+  const boxEl = document.createElement('div');
+  boxEl.className = 'box show-color-' + boxData.type; // 색상 클래스 적용
 
-    // 내부 색상 저장
-    boxEl.dataset.type = boxData.type;
+  boxEl.dataset.type = boxData.type;
+  boxEl.style.left = '-70px';
 
-    // 기본 외부 색상은 무채색
-    boxEl.style.backgroundColor = '#111';
+  conveyor.appendChild(boxEl);
 
-    // 시작 위치 왼쪽 밖
-    let left = -70;
-    boxEl.style.left = left + 'px';
-
-    // 선택적으로 좌표 표시 (디버그용)
-    // boxEl.innerText = boxData.type;
-
-    conveyor.appendChild(boxEl);
-
-    boxes.push({
-      el: boxEl,
-      left: left
-    });
+  boxes.push({
+    el: boxEl,
+    left: -70
   });
+});
+
 
   function animate() {
     boxes.forEach((box, index) => {
