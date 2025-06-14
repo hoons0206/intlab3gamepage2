@@ -146,3 +146,26 @@ body {
     border-radius: 50%;
     background-color: inherit;
   
+    .conveyor {
+      position: absolute;
+      left: 0;
+      bottom: 50%;
+      width: 100vw;
+      height: 100px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .box {
+      width: 70px;
+      height: 70px;
+      margin: 10px 120px; /* ✅ 1P와 동일하게 조정 */
+      display: inline-block;
+      border-radius: 1px;
+      position: absolute;
+      top: 10px;
+      background-color: #111;
+      color: white;
+      font-size: 12px;
+      text-align: center;
+      line-height: 70px;
+    }
