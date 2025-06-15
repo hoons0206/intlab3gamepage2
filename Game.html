@@ -15,37 +15,17 @@
       overflow: hidden;
       white-space: nowrap;
     }
-    .box {
+    .box-img {
       width: 70px;
       height: 70px;
-      margin: 10px 120px;
-      display: inline-block;
-      border-radius: 1px;
       position: absolute;
       top: 10px;
-      background-color: #111;
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+      transition: border 0.2s;
     }
-    .shape-type1 { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); } /* triangle */
-    .shape-type2 { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } /* square */
-    .shape-type3 { clip-path: circle(50% at 50% 50%); } /* circle */
-
-    .show-color-type1 { background-color: red !important; }
-    .show-color-type2 { background-color: green !important; }
-    .show-color-type3 { background-color: blue !important; }
-
-    .shape-sequence-block {
-      display: inline-block;
-      width: 40px;
-      height: 40px;
-      margin: 4px;
-      border-radius: 4px;
+    .bin {
+      width:80px; margin:10px; cursor:pointer;
     }
-    .shape-type1 { background-color: red; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
-    .shape-type2 { background-color: green; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
-    .shape-type3 { background-color: blue; clip-path: circle(50% at 50% 50%); }
   </style>
-
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -64,64 +44,8 @@
   </script>
 </head>
 <body>
-  <div id="timer-bar-container">
-  <div id="timer-bar"></div>
-</div>
 <div id="conveyor"></div>
-
-<div id="conveyor"></div>
-
-<script>
-  const conveyor = document.getElementById('conveyor');
-  const imgMap = {
-    'type1': ['html/media/red1.png', 'html/media/red2.png'],
-    'type2': ['html/media/green1.png', 'html/media/green2.png'],
-    'type3': ['html/media/blue1.png', 'html/media/blue2.png'],
-    'type4': ['html/media/yellow1.png', 'html/media/yellow2.png']
-  };
-
-  const boxes = [];
-  const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
-
-  incomingBoxesRef.on('child_added', snapshot => {
-    const data = snapshot.val();
-    if (!data || !data.type || !data.state) return;
-
-    const img = document.createElement('img');
-    img.src = imgMap[data.type][parseInt(data.state) - 1];
-    img.classList.add('box-img');
-    img.style.left = '0px';  // ✅ 초기 위치 설정
-
-    const boxObj = {
-      el: img,
-      left: 0  // ✅ 위치 추적용 left 속성
-    };
-
-    conveyor.appendChild(img);
-    boxes.push(boxObj);
-  });
-
-  // ✅ 매 프레임마다 박스 이동
-  setInterval(() => {
-    for (let i = boxes.length - 1; i >= 0; i--) {
-      const box = boxes[i];
-      box.left += 2;
-      box.el.style.left = box.left + 'px';
-
-      if (box.left > window.innerWidth * 0.8) {
-      window.location.href = 'Fail.html';
-      return; // 루프 중단
-    }
-      
-      if (box.left > window.innerWidth) {
-        box.el.remove();
-        boxes.splice(i, 1);
-      }
-    }
-  }, 1000 / 30);
-</script>
-
-<div id="bins">
+<div id="bins" style="text-align:center; margin-top: 20px;">
   <img src="html/media/red_bin.png" id="bin-type1" data-type="type1" class="bin">
   <img src="html/media/green_bin.png" id="bin-type2" data-type="type2" class="bin">
   <img src="html/media/blue_bin.png" id="bin-type3" data-type="type3" class="bin">
@@ -129,100 +53,68 @@
 </div>
 
 <script>
+  // ✅ 변수 선언은 한 번만!
   const conveyor = document.getElementById('conveyor');
-  const types = ['type1', 'type2', 'type3'];
-  const boxWidth = 70;
+  const imgMap = {
+    'type1': ['html/media/red1.png', 'html/media/red2.png'],
+    'type2': ['html/media/green1.png', 'html/media/green2.png'],
+    'type3': ['html/media/blue1.png', 'html/media/blue2.png'],
+    'type4': ['html/media/yellow1.png', 'html/media/yellow2.png']
+  };
+  const boxes = [];
+  let selectedBox = null;
   const speed = 3;
   const frameRate = 1000 / 30;
-  const boxes = [];
-  let selectedType = null;
-  let selectedBox = null;
-
   const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
-  const targetLength = 3;
-  let currentSequence = [];
-  let currentIndex = 0;
 
-  function generateRandomSequence() {
-    const seq = [];
-    for (let i = 0; i < targetLength; i++) {
-      seq.push(types[Math.floor(Math.random() * types.length)]);
-    }
-    return seq;
-  }
+  // 박스 생성 및 클릭 이벤트 연결
+  incomingBoxesRef.on('child_added', snapshot => {
+    const data = snapshot.val();
+    if (!data || !data.type || !data.state) return;
 
-  function displaySequence(seq) {
-    const display = document.getElementById('shape-sequence-display');
-    display.innerHTML = '';
-    seq.forEach(shape => {
-      const div = document.createElement('div');
-      div.className = `shape-block shape-${shape}`;
-      div.style.backgroundColor = '#111';
-      display.appendChild(div);
+    const img = document.createElement('img');
+    img.src = imgMap[data.type][parseInt(data.state) - 1];
+    img.classList.add('box-img');
+    img.style.left = '0px';
+    img.dataset.type = data.type;
+    img.dataset.state = data.state;
+
+    const boxObj = {
+      el: img,
+      left: 0
+    };
+
+    // ✅ 박스 클릭 시 선택
+    img.addEventListener('click', () => {
+      if (img.dataset.state !== '2') {
+        alert('📦 박스를 닫아야 분류할 수 있어요!');
+        return;
+      }
+      if (selectedBox && selectedBox.el) {
+        selectedBox.el.style.border = 'none';
+      }
+      selectedBox = boxObj;
+      img.style.border = '3px solid yellow';
     });
-  }
 
-  function resetSequence() {
-    currentSequence = generateRandomSequence();
-    currentIndex = 0;
-    displaySequence(currentSequence);
-  }
-
-  resetSequence();
-
-  window.addEventListener("load", () => {
-    incomingBoxesRef.orderByChild('timestamp').on('child_added', snapshot => {
-      const boxData = snapshot.val();
-      const boxId = snapshot.key;
-
-      const imgEl = document.createElement('img');
-      imgEl.classList.add('box-img');
-      imgEl.style.left = '-70px';
-
-      const imgMap = {
-        'type1': ['html/media/red1.png', 'html/media/red2.png'],
-        'type2': ['html/media/green1.png', 'html/media/green2.png'],
-        'type3': ['html/media/blue1.png', 'html/media/blue2.png'],
-        'type4': ['html/media/yellow1.png', 'html/media/yellow2.png']
-      };
-
-      const state = boxData.state || '1';
-      imgEl.dataset.type = boxData.type;
-      imgEl.dataset.state = state;
-      imgEl.src = imgMap[boxData.type][state === '2' ? 1 : 0];
-
-      conveyor.appendChild(imgEl);
-
-      const boxObj = {
-        id: boxId,
-        el: imgEl,
-        left: -70,
-        originalType: boxData.type,
-        currentType: null
-      };
-
-      imgEl.addEventListener('click', () => {
-        if (imgEl.dataset.state !== '2') {
-          alert('📦 박스를 닫아야 분류할 수 있어요!');
-          return;
-        }
-        if (selectedBox && selectedBox.el) {
-          selectedBox.el.style.border = 'none';
-        }
-        selectedBox = boxObj;
-        imgEl.style.border = '3px solid yellow';
-      });
-
-      boxes.push(boxObj);
-    });
+    conveyor.appendChild(img);
+    boxes.push(boxObj);
   });
 
+  // 박스 이동 및 Fail.html 조건
   setInterval(() => {
     for (let i = boxes.length - 1; i >= 0; i--) {
       const box = boxes[i];
       box.left += speed;
       box.el.style.left = box.left + 'px';
 
+      // 80% 지점 넘으면 Fail.html
+      if (box.left > window.innerWidth * 0.8) {
+        window.location.href = 'Fail.html';
+        return;
+      }
+
+      // 화면 밖으로 나가면 제거
       if (box.left > window.innerWidth) {
         box.el.remove();
         boxes.splice(i, 1);
@@ -230,31 +122,28 @@
     }
   }, frameRate);
 
- document.querySelectorAll('.bin').forEach(bin => {
-  bin.addEventListener('click', () => {
-    if (!selectedBox) {
-      alert('먼저 박스를 선택해 주세요!');
-      return;
-    }
-
-    const binType = bin.dataset.type;
-    // 박스 타입과 상태 모두 일치해야 함
-    if (
-      selectedBox.el.dataset.type === binType &&
-      selectedBox.el.dataset.state === '2'
-    ) {
-      selectedBox.el.remove();
-      boxes.splice(boxes.indexOf(selectedBox), 1);
-      selectedBox = null;
-    } else if (selectedBox.el.dataset.state !== '2') {
-      alert('📦 박스를 닫아야 분류할 수 있어요!');
-    } else {
-      alert('박스의 색과 통이 달라요!');
-    }
+  // bin 클릭 이벤트
+  document.querySelectorAll('.bin').forEach(bin => {
+    bin.addEventListener('click', () => {
+      if (!selectedBox) {
+        alert('먼저 박스를 선택해 주세요!');
+        return;
+      }
+      const binType = bin.dataset.type;
+      if (
+        selectedBox.el.dataset.type === binType &&
+        selectedBox.el.dataset.state === '2'
+      ) {
+        selectedBox.el.remove();
+        boxes.splice(boxes.indexOf(selectedBox), 1);
+        selectedBox = null;
+      } else if (selectedBox.el.dataset.state !== '2') {
+        alert('📦 박스를 닫아야 분류할 수 있어요!');
+      } else {
+        alert('박스의 색과 통이 달라요!');
+      }
+    });
   });
-});
-
 </script>
-
 </body>
 </html>
