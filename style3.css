@@ -197,7 +197,7 @@ body {
   image-rendering: pixelated;
 }
 
-.bins {
+#bins {
    background-color: rgba(255, 0, 0, 0.1); /* 임시 시각 확인용 */
   position: absolute;
   top: 0;
@@ -215,7 +215,7 @@ body {
   overflow: hidden;           /* 넘칠 경우 숨기기 (원하면 auto로 바꿈) */
 }
 
-.bins img {
+#bins img {
   width: 200px;
   height: 200px;
   margin: 0;                  /* 여백 제거 */
