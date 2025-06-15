@@ -71,17 +71,17 @@
   const waitingRef = db.ref('game/waiting');
   let finished = false;
   let successCheckStarted = false;
-  let boxArrived = false; // ✅ 박스 도착 여부 플래그
+  let boxArrived = false;
 
   window.addEventListener('load', async () => {
     try {
       await incomingBoxesRef.remove();
 
       incomingBoxesRef.on('child_added', snapshot => {
-        boxArrived = true; // ✅ 박스 수신 확인
-
         const data = snapshot.val();
         if (!data || !data.type || !data.state) return;
+
+        boxArrived = true;
 
         const img = document.createElement('img');
         img.src = imgMap[data.type][parseInt(data.state) - 1];
@@ -108,9 +108,10 @@
         boxes.push(boxObj);
       });
 
-      // 타임아웃 (실패 조건)
+      // 실패 타이머
       setTimeout(() => {
         if (!finished) {
+          console.log("❌ 실패: 시간 초과");
           finished = true;
           window.location.href = 'Fail.html';
         }
@@ -121,7 +122,7 @@
     }
   });
 
-  // 박스 이동
+  // 박스 이동 및 벗어남 감지
   setInterval(() => {
     if (finished) return;
     for (let i = boxes.length - 1; i >= 0; i--) {
@@ -131,6 +132,7 @@
 
       if (box.left > window.innerWidth * 0.6) {
         if (!finished) {
+          console.log("❌ 실패: 박스가 화면을 벗어남");
           finished = true;
           window.location.href = 'Fail.html';
         }
@@ -165,37 +167,35 @@
     });
   });
 
-  // ✅ waiting 상태 감지 (성공 조건 검사)
+  // waiting 상태 감지
   waitingRef.on('value', snapshot => {
     const data = snapshot.val();
-    if (data && data.status === 'waiting' && !successCheckStarted) {
-      if (!boxArrived) return; // ✅ 박스가 오기 전엔 성공 검사하지 않음
+    if (data && data.status === 'waiting' && !successCheckStarted && boxArrived) {
+      console.log("🟡 1P가 waiting 상태로 전환됨");
       successCheckStarted = true;
       checkIfBoxesCleared();
     }
   });
 
+  // 성공 판정 함수
   function checkIfBoxesCleared() {
     if (finished) return;
 
-    const trySuccess = () => {
+    const interval = setInterval(() => {
+      console.log("🟢 박스 개수 체크:", boxes.length);
       if (boxes.length === 0 && !finished) {
-        finished = true;
-        window.location.href = 'Success.html';
+        clearInterval(interval);
+        setTimeout(() => {
+          if (boxes.length === 0 && !finished) {
+            console.log("✅ 성공 조건 충족");
+            finished = true;
+            window.location.href = 'Success.html';
+          }
+        }, 2000);
       }
-    };
-
-    if (boxes.length === 0) {
-      setTimeout(trySuccess, 2000);
-    } else {
-      const interval = setInterval(() => {
-        if (boxes.length === 0 && !finished) {
-          clearInterval(interval);
-          setTimeout(trySuccess, 2000);
-        }
-      }, 500);
-    }
+    }, 300);
   }
 </script>
 </body>
 </html>
+
