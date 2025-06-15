@@ -49,10 +49,10 @@
 <body>
 <div id="conveyor"></div>
 <div id="bins" style="text-align:center; margin-top: 20px;">
-  <img src="html/media/red_bin.png" id="bin-type1" data-type="type1" class="bin">
-  <img src="html/media/green_bin.png" id="bin-type2" data-type="type2" class="bin">
-  <img src="html/media/blue_bin.png" id="bin-type3" data-type="type3" class="bin">
-  <img src="html/media/yellow_bin.png" id="bin-type4" data-type="type4" class="bin">
+  <img src="html/media/red_bin.png" data-type="type1" class="bin">
+  <img src="html/media/green_bin.png" data-type="type2" class="bin">
+  <img src="html/media/blue_bin.png" data-type="type3" class="bin">
+  <img src="html/media/yellow_bin.png" data-type="type4" class="bin">
 </div>
 
 <script>
@@ -68,14 +68,15 @@
   const speed = 3;
   const frameRate = 1000 / 30;
   const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
+  const waitingRef = db.ref('game/waiting');
   let finished = false;
+  let successCheckStarted = false;
 
-  // 안전한 초기화
+  // 초기화
   window.addEventListener('load', async () => {
     try {
-      await incomingBoxesRef.remove(); // 1. 이전 데이터 삭제
+      await incomingBoxesRef.remove();
 
-      // 2. 삭제 완료 후 리스너 등록
       incomingBoxesRef.on('child_added', snapshot => {
         const data = snapshot.val();
         if (!data || !data.type || !data.state) return;
@@ -87,10 +88,7 @@
         img.dataset.type = data.type;
         img.dataset.state = data.state;
 
-        const boxObj = {
-          el: img,
-          left: 0
-        };
+        const boxObj = { el: img, left: 0 };
 
         img.addEventListener('click', () => {
           if (img.dataset.state !== '2') {
@@ -108,20 +106,20 @@
         boxes.push(boxObj);
       });
 
-      // 3. 타이머 성공 조건
+      // 예비 타이머 실패 조건
       setTimeout(() => {
         if (!finished) {
           finished = true;
-          window.location.href = 'Success.html';
+          window.location.href = 'Fail.html';
         }
       }, 70000);
 
     } catch (error) {
-      console.error('초기화 중 오류:', error);
+      console.error('초기화 오류:', error);
     }
   });
 
-  // 박스 이동 & 실패 조건
+  // 박스 이동 및 화면 밖 실패 처리
   setInterval(() => {
     if (finished) return;
     for (let i = boxes.length - 1; i >= 0; i--) {
@@ -144,7 +142,7 @@
     }
   }, frameRate);
 
-  // 분류 통 클릭 이벤트
+  // 분류통 클릭
   document.querySelectorAll('.bin').forEach(bin => {
     bin.addEventListener('click', () => {
       if (finished) return;
@@ -152,40 +150,32 @@
         alert('먼저 박스를 선택해 주세요!');
         return;
       }
+
       const binType = bin.dataset.type;
-     if (
-  selectedBox.el.dataset.type === binType &&
-  selectedBox.el.dataset.state === '2'
-) {
-  selectedBox.el.remove();
-  boxes.splice(boxes.indexOf(selectedBox), 1);
-  selectedBox = null;
+      if (
+        selectedBox.el.dataset.type === binType &&
+        selectedBox.el.dataset.state === '2'
+      ) {
+        selectedBox.el.remove();
+        boxes.splice(boxes.indexOf(selectedBox), 1);
+        selectedBox = null;
 
-  if (boxes.length === 0 && !finished) {
-    finished = true;
-    db.ref('game/result').set({ status: 'success' });
-    window.location.href = 'Success.html';
-  }
-}
-
-       if (boxes.length === 0 && !finished) {
-    finished = true;
-    db.ref('game/result').set({ status: 'success' }); // Firebase에 성공 기록
-    window.location.href = 'Success.html'; // 성공 페이지로 이동
-  }
-      else if (selectedBox.el.dataset.state !== '2') 
-      {
-      } 
-      else {
-
+        // ✅ 분류 성공 후 박스가 다 사라졌을 때 waiting 상태인지 확인
+        db.ref('game/waiting').once('value').then(snapshot => {
+          const waitingData = snapshot.val();
+          if (waitingData && waitingData.status === 'waiting') {
+            if (boxes.length === 0 && !finished) {
+              finished = true;
+              window.location.href = 'Success.html';
+            }
+          }
+        });
       }
     });
   });
 
-    const waitingRef = db.ref('game/waiting');
-  let successCheckStarted = false;
-
-  waitingRef.on('value', (snapshot) => {
+  // ✅ 1P가 waiting에 들어갔는지 감지
+  waitingRef.on('value', snapshot => {
     const data = snapshot.val();
     if (data && data.status === 'waiting' && !successCheckStarted) {
       successCheckStarted = true;
@@ -193,31 +183,33 @@
     }
   });
 
+  // ✅ waiting 상태에서만 success 조건 평가
   function checkIfBoxesCleared() {
-    if (finished) return; // 이미 실패 or 성공했다면 무시
+    if (finished) return;
+
+    const trySuccess = () => {
+      db.ref('game/waiting').once('value').then(snapshot => {
+        const waitingData = snapshot.val();
+        if (waitingData && waitingData.status === 'waiting') {
+          if (boxes.length === 0 && !finished) {
+            finished = true;
+            window.location.href = 'Success.html';
+          }
+        }
+      });
+    };
 
     if (boxes.length === 0) {
-      setTimeout(() => {
-        if (!finished) {
-          finished = true;
-          window.location.href = 'Success.html';
-        }
-      }, 2000);
+      setTimeout(trySuccess, 2000);
     } else {
       const interval = setInterval(() => {
         if (boxes.length === 0 && !finished) {
           clearInterval(interval);
-          setTimeout(() => {
-            if (!finished) {
-              finished = true;
-              window.location.href = 'Success.html';
-            }
-          }, 2000);
+          setTimeout(trySuccess, 2000);
         }
       }, 500);
     }
   }
-  
 </script>
 </body>
 </html>
