@@ -153,15 +153,27 @@
         return;
       }
       const binType = bin.dataset.type;
-      if (
-        selectedBox.el.dataset.type === binType &&
-        selectedBox.el.dataset.state === '2'
-      ) {
-        selectedBox.el.remove();
-        boxes.splice(boxes.indexOf(selectedBox), 1);
-        selectedBox = null;
-        // 성공 여부는 타이머로만 판정
-      } else if (selectedBox.el.dataset.state !== '2') 
+     if (
+  selectedBox.el.dataset.type === binType &&
+  selectedBox.el.dataset.state === '2'
+) {
+  selectedBox.el.remove();
+  boxes.splice(boxes.indexOf(selectedBox), 1);
+  selectedBox = null;
+
+  if (boxes.length === 0 && !finished) {
+    finished = true;
+    db.ref('game/result').set({ status: 'success' });
+    window.location.href = 'Success.html';
+  }
+}
+
+       if (boxes.length === 0 && !finished) {
+    finished = true;
+    db.ref('game/result').set({ status: 'success' }); // Firebase에 성공 기록
+    window.location.href = 'Success.html'; // 성공 페이지로 이동
+  }
+      else if (selectedBox.el.dataset.state !== '2') 
       {
       } 
       else {
