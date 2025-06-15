@@ -1,128 +1,200 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>2P 화면</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="style3.css">
   <style>
-    .box {
-      width: 50px;
-      height: 50px;
+    #conveyor {
       position: absolute;
-      top: 100px;
-      transition: left 0.1s linear;
+      left: 0;
+      bottom: 50%;
+      width: 100vw;
+      height: 100px;
+      overflow: hidden;
+      white-space: nowrap;
     }
-    .grey { background-color: grey; }
-    .red { background-color: red; }
-    .green { background-color: green; }
-    .blue { background-color: blue; }
+    .box-img {
+      width: 70px;
+      height: 70px;
+      position: absolute;
+      top: 10px;
+      transition: border 0.2s;
+    }
+    .bin {
+      width: 80px;
+      margin: 10px;
+      cursor: pointer;
+    }
   </style>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
+      authDomain: "interaction-lab-3-c4513.firebaseapp.com",
+      databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
+      projectId: "interaction-lab-3-c4513",
+      storageBucket: "interaction-lab-3-c4513.appspot.com",
+      messagingSenderId: "40397314576",
+      appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
 </head>
 <body>
-  <div id="boxContainer"></div>
+<div id="conveyor"></div>
+<div id="bins" style="text-align:center; margin-top: 20px;">
+  <img src="html/media/red_bin.png" data-type="type1" class="bin">
+  <img src="html/media/green_bin.png" data-type="type2" class="bin">
+  <img src="html/media/blue_bin.png" data-type="type3" class="bin">
+  <img src="html/media/yellow_bin.png" data-type="type4" class="bin">
+</div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+<script>
+  const conveyor = document.getElementById('conveyor');
+  const imgMap = {
+    'type1': ['html/media/red1.png', 'html/media/red2.png'],
+    'type2': ['html/media/green1.png', 'html/media/green2.png'],
+    'type3': ['html/media/blue1.png', 'html/media/blue2.png'],
+    'type4': ['html/media/yellow1.png', 'html/media/yellow2.png']
+  };
+  const boxes = [];
+  let selectedBox = null;
+  const speed = 3;
+  const frameRate = 1000 / 30;
+  const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
+  const waitingRef = db.ref('game/waiting');
+  let finished = false;
+  let successCheckStarted = false;
+  let boxArrived = false;
 
-    const firebaseConfig = {
-      // 🔐 실제 프로젝트의 Firebase 설정값으로 교체하세요
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      databaseURL: "YOUR_DATABASE_URL",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+  window.addEventListener('load', async () => {
+    try {
+      await incomingBoxesRef.remove();
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const boxRef = ref(db, 'boxes');
-    const waitingRef = ref(db, 'waiting');
+      incomingBoxesRef.on('child_added', snapshot => {
+        const data = snapshot.val();
+        if (!data || !data.type || !data.state) return;
 
-    const boxContainer = document.getElementById('boxContainer');
-    const boxElements = {};
-    let finished = false;
-    let successCheckStarted = false;
+        boxArrived = true;
 
-    function checkIfBoxesCleared() {
-      successCheckStarted = true;
+        const img = document.createElement('img');
+        img.src = imgMap[data.type][parseInt(data.state) - 1];
+        img.classList.add('box-img');
+        img.style.left = '0px';
+        img.dataset.type = data.type;
+        img.dataset.state = data.state;
+
+        const boxObj = { el: img, left: 0 };
+
+        img.addEventListener('click', () => {
+          if (img.dataset.state !== '2') {
+            alert('📦 박스를 닫아야 분류할 수 있어요!');
+            return;
+          }
+          if (selectedBox && selectedBox.el) {
+            selectedBox.el.style.border = 'none';
+          }
+          selectedBox = boxObj;
+          img.style.border = '3px solid yellow';
+        });
+
+        conveyor.appendChild(img);
+        boxes.push(boxObj);
+      });
+
+      // 실패 타이머
       setTimeout(() => {
-        if (Object.keys(boxElements).length === 0 && !finished) {
-          console.log("🎉 성공!");
+        if (!finished) {
+          console.log("❌ 실패: 시간 초과");
           finished = true;
-          window.location.href = 'Success.html';
-        } else {
-          console.log("✅ 박스 있음. 성공 조건 실패.");
-          successCheckStarted = false; // 다시 체크할 수 있도록
+          window.location.href = 'Fail.html';
         }
-      }, 3000);
+      }, 70000);
+
+    } catch (error) {
+      console.error('초기화 오류:', error);
     }
+  });
 
-    onValue(boxRef, (snapshot) => {
-      const data = snapshot.val();
+  // 박스 이동 및 벗어남 감지
+  setInterval(() => {
+    if (finished) return;
+    for (let i = boxes.length - 1; i >= 0; i--) {
+      const box = boxes[i];
+      box.left += speed;
+      box.el.style.left = box.left + 'px';
 
-      // 기존 박스 요소 제거
-      for (const key in boxElements) {
-        if (!data || !data[key]) {
-          boxContainer.removeChild(boxElements[key]);
-          delete boxElements[key];
-        }
+if (box.left > window.innerWidth * 0.6) {
+  if (!finished && !successCheckStarted) {
+    console.log("❌ 실패: 박스가 화면을 벗어남");
+    finished = true;
+    window.location.href = 'Fail.html';
+  }
+  return;
+}
+
+      if (box.left > window.innerWidth) {
+        box.el.remove();
+        boxes.splice(i, 1);
+      }
+    }
+  }, frameRate);
+
+  // 분류통 클릭
+  document.querySelectorAll('.bin').forEach(bin => {
+    bin.addEventListener('click', () => {
+      if (finished) return;
+      if (!selectedBox) {
+        alert('먼저 박스를 선택해 주세요!');
+        return;
       }
 
-      if (data) {
-        for (const key in data) {
-          const { type, shape, x } = data[key];
-
-          if (!boxElements[key]) {
-            const div = document.createElement('div');
-            div.classList.add('box', shape || 'grey');
-            boxContainer.appendChild(div);
-            boxElements[key] = div;
-          }
-
-          const box = boxElements[key];
-          box.className = 'box'; // reset classes
-          box.classList.add(shape || 'grey');
-          box.style.left = `${x}px`;
-
-          // ✅ 실패 조건 (화면을 벗어남) — 성공 체크 중에는 무시
-          if (x > window.innerWidth * 0.6) {
-            if (!finished && !successCheckStarted) {
-              console.log("❌ 실패: 박스가 화면을 벗어남");
-              finished = true;
-              window.location.href = 'Fail.html';
-              return;
-            }
-          }
-        }
-      }
-
-      // ✅ 성공 조건: 박스가 모두 없어졌는지 감지
-      if (Object.keys(boxElements).length === 0 && !successCheckStarted && !finished) {
-        checkIfBoxesCleared();
-      }
-    });
-
-    // ✅ 1P가 waiting 값을 success로 바꾸면 성공
-    onValue(waitingRef, (snapshot) => {
-      const value = snapshot.val();
-      if (value === 'success' && !finished) {
-        console.log("✅ 1P가 성공함 → 성공 처리");
-        finished = true;
-        window.location.href = 'Success.html';
+      const binType = bin.dataset.type;
+      if (
+        selectedBox.el.dataset.type === binType &&
+        selectedBox.el.dataset.state === '2'
+      ) {
+        selectedBox.el.remove();
+        boxes.splice(boxes.indexOf(selectedBox), 1);
+        selectedBox = null;
       }
     });
+  });
 
-    // ✅ 타임아웃 실패 조건 (70초)
-    setTimeout(() => {
-      if (!finished) {
-        console.log("❌ 실패: 시간 초과");
-        finished = true;
-        window.location.href = 'Fail.html';
+  // waiting 상태 감지
+  waitingRef.on('value', snapshot => {
+    const data = snapshot.val();
+    if (data && data.status === 'waiting' && !successCheckStarted && boxArrived) {
+      console.log("🟡 1P가 waiting 상태로 전환됨");
+      successCheckStarted = true;
+      checkIfBoxesCleared();
+    }
+  });
+
+  // 성공 판정 함수
+  function checkIfBoxesCleared() {
+    if (finished) return;
+
+    const interval = setInterval(() => {
+      console.log("🟢 박스 개수 체크:", boxes.length);
+      if (boxes.length === 0 && !finished) {
+        clearInterval(interval);
+        setTimeout(() => {
+          if (boxes.length === 0 && !finished) {
+            console.log("✅ 성공 조건 충족");
+            finished = true;
+            window.location.href = 'Success.html';
+          }
+        }, 2000);
       }
-    }, 70000);
-  </script>
+    }, 300);
+  }
+</script>
 </body>
 </html>
-
