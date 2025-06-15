@@ -186,17 +186,16 @@ body {
   line-height: 70px;
 }
 
- .box-img {
-  width: 100px;
-  height: 100px;
-  margin: 10px 120px;
-  display: inline-block;
-  object-fit: contain;
-  position: absolute;
-  top: 10px;
-  image-rendering: pixelated;
-}
-
+  .box-img {
+      width: 100px;
+      height: 100px;
+      margin: 10px 120px;
+      display: inline-block;
+      object-fit: contain; 
+      position: absolute;
+      top: 10px;
+     
+ }
   #timer-bar-container {
     position: fixed;
     top: 7px;
