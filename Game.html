@@ -1,49 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>2P 화면</title>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="style3.css">
   <style>
-    #conveyor {
-      position: absolute;
-      left: 0;
-      bottom: 50%;
-      width: 100vw;
-      height: 100px;
+    body {
+      margin: 0;
       overflow: hidden;
-      white-space: nowrap;
+      background: #f0f0f0;
     }
-    .box {
+    #conveyor {
+      position: relative;
+      width: 100%;
+      height: 120px;
+      background: #ddd;
+      overflow: hidden;
+    }
+    .box-img {
+      position: absolute;
       width: 70px;
       height: 70px;
-      margin: 10px 120px;
-      display: inline-block;
-      border-radius: 1px;
-      position: absolute;
-      top: 10px;
-      background-color: #111;
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+      top: 25px;
+      transition: left 0.03s linear;
     }
-    .shape-type1 { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); } /* triangle */
-    .shape-type2 { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } /* square */
-    .shape-type3 { clip-path: circle(50% at 50% 50%); } /* circle */
-
-    .show-color-type1 { background-color: red !important; }
-    .show-color-type2 { background-color: green !important; }
-    .show-color-type3 { background-color: blue !important; }
-
-    .shape-sequence-block {
-      display: inline-block;
-      width: 40px;
-      height: 40px;
-      margin: 4px;
-      border-radius: 4px;
-    }
-    .shape-type1 { background-color: red; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
-    .shape-type2 { background-color: green; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
-    .shape-type3 { background-color: blue; clip-path: circle(50% at 50% 50%); }
   </style>
 
   <!-- Firebase -->
@@ -64,137 +43,58 @@
   </script>
 </head>
 <body>
-  <div id="timer-bar-container">
-  <div id="timer-bar"></div>
-</div>
+
 <div id="conveyor"></div>
-<div id="bins">
-  <img src="html/media/red_bin.png" id="bin-type1" data-type="type1" class="bin">
-  <img src="html/media/green_bin.png" id="bin-type2" data-type="type2" class="bin">
-  <img src="html/media/blue_bin.png" id="bin-type3" data-type="type3" class="bin">
-  <img src="html/media/yellow_bin.png" id="bin-type4" data-type="type4" class="bin">
-</div>
 
 <script>
   const conveyor = document.getElementById('conveyor');
-  const types = ['type1', 'type2', 'type3'];
   const boxWidth = 70;
-  const speed = 3;
-  const frameRate = 1000 / 30;
-  const boxes = [];
-  let selectedType = null;
-  let selectedBox = null;
+  const speed = 2;
+
+  const imgMap = {
+    'type1': ['html/media/red1.png', 'html/media/red2.png'],
+    'type2': ['html/media/green1.png', 'html/media/green2.png'],
+    'type3': ['html/media/blue1.png', 'html/media/blue2.png'],
+    'type4': ['html/media/yellow1.png', 'html/media/yellow2.png']
+  };
 
   const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
-  const targetLength = 3;
-  let currentSequence = [];
-  let currentIndex = 0;
+  const boxes = [];
 
-  function generateRandomSequence() {
-    const seq = [];
-    for (let i = 0; i < targetLength; i++) {
-      seq.push(types[Math.floor(Math.random() * types.length)]);
-    }
-    return seq;
-  }
+  incomingBoxesRef.on('child_added', snapshot => {
+    const data = snapshot.val();
+    if (!data || !data.type || !data.state) return;
 
-  function displaySequence(seq) {
-    const display = document.getElementById('shape-sequence-display');
-    display.innerHTML = '';
-    seq.forEach(shape => {
-      const div = document.createElement('div');
-      div.className = `shape-block shape-${shape}`;
-      div.style.backgroundColor = '#111';
-      display.appendChild(div);
-    });
-  }
+    const img = document.createElement('img');
+    img.src = imgMap[data.type][parseInt(data.state) - 1];
+    img.classList.add('box-img');
+    img.style.left = '0px';
 
-  function resetSequence() {
-    currentSequence = generateRandomSequence();
-    currentIndex = 0;
-    displaySequence(currentSequence);
-  }
+    const boxObj = {
+      el: img,
+      left: 0
+    };
 
-  resetSequence();
-
-  window.addEventListener("load", () => {
-    incomingBoxesRef.orderByChild('timestamp').on('child_added', snapshot => {
-      const boxData = snapshot.val();
-      const boxId = snapshot.key;
-
-      const imgEl = document.createElement('img');
-      imgEl.classList.add('box-img');
-      imgEl.style.left = '-70px';
-
-      const imgMap = {
-        'type1': ['html/media/red1.png', 'html/media/red2.png'],
-        'type2': ['html/media/green1.png', 'html/media/green2.png'],
-        'type3': ['html/media/blue1.png', 'html/media/blue2.png'],
-        'type4': ['html/media/yellow1.png', 'html/media/yellow2.png']
-      };
-
-      const state = boxData.state || '1';
-      imgEl.dataset.type = boxData.type;
-      imgEl.dataset.state = state;
-      imgEl.src = imgMap[boxData.type][state === '2' ? 1 : 0];
-
-      conveyor.appendChild(imgEl);
-
-      const boxObj = {
-        id: boxId,
-        el: imgEl,
-        left: -70,
-        originalType: boxData.type,
-        currentType: null
-      };
-
-      imgEl.addEventListener('click', () => {
-        if (imgEl.dataset.state !== '2') {
-          alert('📦 박스를 닫아야 분류할 수 있어요!');
-          return;
-        }
-        if (selectedBox && selectedBox.el) {
-          selectedBox.el.style.border = 'none';
-        }
-        selectedBox = boxObj;
-        imgEl.style.border = '3px solid yellow';
-      });
-
-      boxes.push(boxObj);
-    });
+    conveyor.appendChild(img);
+    boxes.push(boxObj);
   });
 
+  // 매 프레임마다 박스 이동
   setInterval(() => {
     for (let i = boxes.length - 1; i >= 0; i--) {
       const box = boxes[i];
       box.left += speed;
       box.el.style.left = box.left + 'px';
 
+      // 화면 밖으로 나간 박스 제거
       if (box.left > window.innerWidth) {
         box.el.remove();
         boxes.splice(i, 1);
       }
     }
-  }, frameRate);
-
-  document.querySelectorAll('.bin').forEach(bin => {
-    bin.addEventListener('click', () => {
-      if (!selectedBox) {
-        alert('먼저 박스를 선택해 주세요!');
-        return;
-      }
-
-      const binType = bin.dataset.type;
-      if (selectedBox.el.dataset.type === binType) {
-        selectedBox.el.remove();
-        boxes.splice(boxes.indexOf(selectedBox), 1);
-        selectedBox = null;
-      } else {
-        alert('박스의 색과 통이 달라요!');
-      }
-    });
-  });
+  }, 1000 / 30); // 약 30FPS
 </script>
 
 </body>
 </html>
+
