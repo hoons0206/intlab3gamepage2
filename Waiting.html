@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>About</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="style2.css">
+
+  <!-- ✅ Firebase 추가 -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD4d7JvLj90ar0Q8o_AEXFTjhMZF-oI-DU",
+      authDomain: "interaction-lab-3-c4513.firebaseapp.com",
+      databaseURL: "https://interaction-lab-3-c4513-default-rtdb.firebaseio.com",
+      projectId: "interaction-lab-3-c4513",
+      storageBucket: "interaction-lab-3-c4513.appspot.com",
+      messagingSenderId: "40397314576",
+      appId: "1:40397314576:web:b6bbbeb99fd43bda508895"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ✅ 1P가 대기 페이지에 도달하면 Firebase에 알림 + 3초 후 Success 이동
+    window.addEventListener('load', () => {
+      db.ref('game/waiting').set({ status: 'waiting' });
+      setTimeout(() => {
+        window.location.href = 'Success.html';
+      }, 3000);
+    });
+  </script>
+</head>
+
+<body>
+  <div class="intro">
+    <p id="typed-text"></p>
+  </div>
+
+  <div class="crt-bloom"></div>
+  <div class="crt-frame"></div>
+
+  <script>
+    const text = `퇴근 준비 중...`;
+
+    const typedEl = document.getElementById("typed-text");
+    let idx = 0;
+
+    function typeNext() {
+      if (idx <= text.length) {
+        typedEl.innerHTML = text.slice(0, idx).replace(/\n/g, '<br>');
+        idx++;
+        setTimeout(typeNext, 60);
+      }
+    }
+
+    setTimeout(typeNext, 1000);
+  </script>
+</body>
+</html>
