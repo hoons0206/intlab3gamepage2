@@ -204,14 +204,13 @@ body {
   margin: 0;                /* 여백 제거 */
   padding: 0;               /* 안쪽 여백 제거 */
   display: flex;            /* 내부 이미지 정렬을 위해 flex 사용 */
-  flex-direction: column;   /* 이미지 세로 정렬 (원하는 방식에 따라 row로 바꿔도 됨) */
+  flex-direction: row;   
   align-items: flex-end;    /* 이미지 우측 정렬 */
   z-index: 10;              /* 다른 요소보다 위에 오도록 설정 (필요 시) */
 }
 
 .bins img {
-  width: 100%;              /* bins의 너비를 다 쓰도록 */
-  max-width: 200px;         /* 너무 크지 않게 제한 */
+  width: 200px;             
   height: auto;
   margin: 0;
   padding: 0;
