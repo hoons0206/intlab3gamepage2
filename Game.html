@@ -65,6 +65,7 @@
   const speed = 3;
   const frameRate = 1000 / 30;
   const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
+  let successTimer = null;
 
   // 1. 2P 시작 시 기존 데이터 모두 삭제
   window.addEventListener('load', () => {
@@ -111,8 +112,8 @@
       box.left += speed;
       box.el.style.left = box.left + 'px';
 
-      // 80% 지점 넘으면 Fail.html
-      if (box.left > window.innerWidth * 0.8) {
+      // 60% 지점 넘으면 Fail.html
+      if (box.left > window.innerWidth * 0.6) {
         window.location.href = 'Fail.html';
         return;
       }
@@ -140,6 +141,14 @@
         selectedBox.el.remove();
         boxes.splice(boxes.indexOf(selectedBox), 1);
         selectedBox = null;
+
+        // 모든 박스를 다 넣었으면 2초 후 Success.html
+        if (boxes.length === 0) {
+          if (successTimer) clearTimeout(successTimer);
+          successTimer = setTimeout(() => {
+            window.location.href = 'Success.html';
+          }, 2000);
+        }
       } else if (selectedBox.el.dataset.state !== '2') {
         alert('📦 박스를 닫아야 분류할 수 있어요!');
       } else {
