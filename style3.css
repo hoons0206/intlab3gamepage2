@@ -197,6 +197,26 @@ body {
   image-rendering: pixelated;
 }
 
+  #timer-bar-container {
+    position: fixed;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80vw;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 10px;
+    overflow: hidden;
+    z-index: 999;
+  }
+  #timer-bar {
+    width: 0%;
+    height: 100%;
+    background-color: #4caf50;
+    transition: width 1s linear;
+  }
+
+
 #bins {
    background-color: rgba(255, 0, 0, 0.1); /* 임시 시각 확인용 */
   position: absolute;
@@ -216,8 +236,8 @@ body {
 }
 
 #bins img {
-  width: 200px;
-  height: 200px;
+  width: 100px;
+  height: 100px;
   margin: 0;                  /* 여백 제거 */
   padding: 0;
   cursor: pointer;
