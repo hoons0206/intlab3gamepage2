@@ -183,23 +183,77 @@ if (box.left > window.innerWidth * 0.6) {
   });
 
   // 성공 판정 함수
-  function checkIfBoxesCleared() {
-    if (finished) return;
+  const timerBar = document.getElementById('timer-bar');
+  let gaugeStartTime = Date.now();
+  const gaugeDuration = 60 * 1000; // 30초
 
-    const interval = setInterval(() => {
-      console.log("🟢 박스 개수 체크:", boxes.length);
-      if (boxes.length === 0 && !finished) {
-        clearInterval(interval);
-        setTimeout(() => {
-          if (boxes.length === 0 && !finished) {
-            console.log("✅ 성공 조건 충족");
-            finished = true;
-            window.location.href = 'Success.html';
-          }
-        }, 2000);
+  const gaugeInterval = setInterval(() => {
+    const elapsed = Date.now() - gaugeStartTime;
+    const percent = Math.min(100, (elapsed / gaugeDuration) * 100);
+    timerBar.style.width = percent + '%';
+
+    if (elapsed >= gaugeDuration) {
+      clearInterval(gaugeInterval);
+
+      // 30초 동안 실패하지 않으면 성공 페이지로 이동
+      window.location.href = 'Waiting.html';
+    }
+  }, 1000); 
+
+  function triggerBlackout() {
+  const blackout = document.getElementById('blackout-overlay');
+  const sound = document.getElementById('electric-sound');
+
+  blackout.classList.add('active');
+  sound.play();
+
+  // 박스 클릭 잠시 비활성화
+  document.querySelectorAll('.box-img').forEach(box => {
+    box.style.pointerEvents = 'none';
+  });
+
+  // 3초 후 복구
+  setTimeout(() => {
+    blackout.classList.remove('active');
+    document.querySelectorAll('.box-img').forEach(box => {
+      box.style.pointerEvents = 'auto';
+    });
+  }, 3000);
+}
+
+
+
+let blackoutCount = 0;
+const maxBlackouts = 10;
+
+function startBlackoutLoop() {
+  function scheduleNextBlackout() {
+    const delay = Math.random() * 20000 + 10000; // 10~30초 사이
+    setTimeout(() => {
+      triggerBlackout(); // ← 네가 이미 만든 정전 함수
+      blackoutCount++;
+
+      if (blackoutCount < maxBlackouts) {
+        scheduleNextBlackout(); // 다음 정전 예약
       }
-    }, 300);
+    }, delay);
   }
+
+  scheduleNextBlackout(); // 첫 정전 예약 시작
+}
+window.onload = () => {
+  // 다른 초기화 코드들...
+  startBlackoutLoop(); // 정전 루프 시작!
+};
+document.addEventListener('click', () => {
+  const audios = document.querySelectorAll('audio');
+  audios.forEach(audio => {
+    audio.muted = false;
+    audio.play().catch(e => console.warn("음악 재생 실패:", e));
+  });
+}, { once: true });
+
+  
 </script>
 </body>
 </html>
