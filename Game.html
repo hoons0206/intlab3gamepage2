@@ -142,23 +142,28 @@
     }
   }, frameRate);
 
-  // 분류통 클릭
-  document.querySelectorAll('.bin').forEach(bin => {
-    bin.addEventListener('click', () => {
-      if (finished) return;
-      if (!selectedBox) {
-        alert('먼저 박스를 선택해 주세요!');
-        return;
-      }
+// ✅ 분류통 클릭
+document.querySelectorAll('.bin').forEach(bin => {
+  bin.addEventListener('click', () => {
+    if (finished) return;
+    if (!selectedBox) {
+      alert('먼저 박스를 선택해 주세요!');
+      return;
+    }
 
-      const binType = bin.dataset.type;
-      if (
-        selectedBox.el.dataset.type === binType &&
-        selectedBox.el.dataset.state === '2'
-      ) {
-        selectedBox.el.remove();
-        boxes.splice(boxes.indexOf(selectedBox), 1);
-        selectedBox = null;
+    const binType = bin.dataset.type;
+    if (
+      selectedBox.el.dataset.type === binType &&
+      selectedBox.el.dataset.state === '2'
+    ) {
+      selectedBox.el.remove();
+      boxes.splice(boxes.indexOf(selectedBox), 1);
+      selectedBox = null;
+
+      // ✅ 분류만 하고, 성공 여부는 waiting 상태 감지할 때만 처리
+    }
+  });
+});
 
         // ✅ 분류 성공 후 박스가 다 사라졌을 때 waiting 상태인지 확인
         db.ref('game/waiting').once('value').then(snapshot => {
@@ -175,41 +180,38 @@
   });
 
   // ✅ 1P가 waiting에 들어갔는지 감지
-  waitingRef.on('value', snapshot => {
-    const data = snapshot.val();
-    if (data && data.status === 'waiting' && !successCheckStarted) {
-      successCheckStarted = true;
-      checkIfBoxesCleared();
-    }
-  });
-
-  // ✅ waiting 상태에서만 success 조건 평가
-  function checkIfBoxesCleared() {
-    if (finished) return;
-
-    const trySuccess = () => {
-      db.ref('game/waiting').once('value').then(snapshot => {
-        const waitingData = snapshot.val();
-        if (waitingData && waitingData.status === 'waiting') {
-          if (boxes.length === 0 && !finished) {
-            finished = true;
-            window.location.href = 'Success.html';
-          }
-        }
-      });
-    };
-
-    if (boxes.length === 0) {
-      setTimeout(trySuccess, 2000);
-    } else {
-      const interval = setInterval(() => {
-        if (boxes.length === 0 && !finished) {
-          clearInterval(interval);
-          setTimeout(trySuccess, 2000);
-        }
-      }, 500);
-    }
+waitingRef.on('value', snapshot => {
+  const data = snapshot.val();
+  if (data && data.status === 'waiting' && !successCheckStarted) {
+    successCheckStarted = true;
+    checkIfBoxesCleared();
   }
+});
+
+
+// ✅ waiting 상태에서만 success 조건 평가
+function checkIfBoxesCleared() {
+  if (finished) return;
+
+  const trySuccess = () => {
+    if (boxes.length === 0 && !finished) {
+      finished = true;
+      window.location.href = 'Success.html';
+    }
+  };
+
+  if (boxes.length === 0) {
+    setTimeout(trySuccess, 2000); // 여유를 두고 한번 더 체크
+  } else {
+    const interval = setInterval(() => {
+      if (boxes.length === 0 && !finished) {
+        clearInterval(interval);
+        setTimeout(trySuccess, 2000);
+      }
+    }, 500);
+  }
+}
+
 </script>
 </body>
 </html>
