@@ -199,21 +199,27 @@ body {
 
 .bins {
   position: absolute;
+  top: 0;
   right: 0;
-  top: 0;                    /* 필요에 따라 top 또는 bottom 선택 */
+  width: 200px;
+  height: 100vh;              /* 디스플레이 높이 100% */
   margin: 0;
   padding: 0;
   display: flex;
-  flex-direction: column;    /* 수직 정렬 */
-  align-items: flex-end;     /* 이미지들을 우측에 정렬 */
+  flex-direction: column;     /* 수직 정렬 */
+  align-items: flex-end;      /* 우측 정렬 */
+  justify-content: flex-start;/* 위쪽부터 정렬 */
   z-index: 10;
-  max-width: 200px;         /* 전체 화면 넘지 않게 */
-  text-align: right;
+  background-color: transparent; /* 디버깅 시 rgba(255,0,0,0.1) 사용 */
+  overflow: hidden;           /* 넘칠 경우 숨기기 (원하면 auto로 바꿈) */
 }
 
 .bins img {
-  width: 100px;              /* 작게 조정 (원하는 크기로) */
-  height: auto;
-  margin: 4px 0;             /* 수직 간격 */
+  width: 200px;
+  height: 200px;
+  margin: 0;                  /* 여백 제거 */
+  padding: 0;
   cursor: pointer;
+  object-fit: cover;          /* 비율 깨짐 없이 채우기 */
 }
+
