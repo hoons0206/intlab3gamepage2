@@ -167,34 +167,35 @@
     });
   });
 
-  // waiting 상태 감지
-  waitingRef.on('value', snapshot => {
-    const data = snapshot.val();
-    if (data && data.status === 'waiting' && !successCheckStarted && boxArrived) {
-      console.log("🟡 1P가 waiting 상태로 전환됨");
-      successCheckStarted = true;
-      checkIfBoxesCleared();
-    }
-  });
-
-  // 성공 판정 함수
-  function checkIfBoxesCleared() {
-    if (finished) return;
-
-    const interval = setInterval(() => {
-      console.log("🟢 박스 개수 체크:", boxes.length);
-      if (boxes.length === 0 && !finished) {
-        clearInterval(interval);
-        setTimeout(() => {
-          if (boxes.length === 0 && !finished) {
-            console.log("✅ 성공 조건 충족");
-            finished = true;
-            window.location.href = 'Success.html';
-          }
-        }, 2000);
-      }
-    }, 300);
+// waiting 상태 감지
+waitingRef.on('value', snapshot => {
+  const data = snapshot.val();
+  if (data && data.status === 'waiting' && !successCheckStarted && boxArrived) {
+    console.log("🟡 1P가 waiting 상태로 전환됨");
+    successCheckStarted = true;
+    checkIfBoxesCleared();
   }
+});
+
+// 성공 판정 함수
+function checkIfBoxesCleared() {
+  if (finished) return;
+
+  const interval = setInterval(() => {
+    console.log("🟢 박스 개수 체크:", boxes.length);
+    if (boxes.length === 0 && !finished) {
+      clearInterval(interval);
+      setTimeout(() => {
+        if (boxes.length === 0 && !finished) {
+          console.log("✅ 성공 조건 충족");
+          finished = true;
+          window.location.href = 'Success.html';
+        }
+      }, 2000); // 추가 확인 시간 후 이동
+    }
+  }, 300); // 박스 여부 주기적 확인
+}
+
 </script>
 </body>
 </html>
