@@ -108,6 +108,11 @@
       box.left += 2;
       box.el.style.left = box.left + 'px';
 
+      if (box.left > window.innerWidth * 0.8) {
+      window.location.href = 'Fail.html';
+      return; // 루프 중단
+    }
+      
       if (box.left > window.innerWidth) {
         box.el.remove();
         boxes.splice(i, 1);
