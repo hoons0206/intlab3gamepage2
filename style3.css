@@ -232,7 +232,7 @@ body {
 }
 
 #bins img {
-  width: 200px;
+  width: auto;
   height: 25vh;               /* 화면의 1/4 높이 */
   object-fit: cover;
   margin: 0;
