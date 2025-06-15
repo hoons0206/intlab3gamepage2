@@ -181,6 +181,43 @@
       }
     });
   });
+
+    const waitingRef = db.ref('game/waiting');
+  let successCheckStarted = false;
+
+  waitingRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data && data.status === 'waiting' && !successCheckStarted) {
+      successCheckStarted = true;
+      checkIfBoxesCleared();
+    }
+  });
+
+  function checkIfBoxesCleared() {
+    if (finished) return; // 이미 실패 or 성공했다면 무시
+
+    if (boxes.length === 0) {
+      setTimeout(() => {
+        if (!finished) {
+          finished = true;
+          window.location.href = 'Success.html';
+        }
+      }, 2000);
+    } else {
+      const interval = setInterval(() => {
+        if (boxes.length === 0 && !finished) {
+          clearInterval(interval);
+          setTimeout(() => {
+            if (!finished) {
+              finished = true;
+              window.location.href = 'Success.html';
+            }
+          }, 2000);
+        }
+      }, 500);
+    }
+  }
+  
 </script>
 </body>
 </html>
