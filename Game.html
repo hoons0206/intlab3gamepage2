@@ -48,7 +48,7 @@
 </head>
 <body>
 
-  <div id="timer-bar-container">
+<div id="timer-bar-container">
   <div id="timer-bar"></div>
 </div>
   
@@ -251,12 +251,20 @@ window.onload = () => {
   // 다른 초기화 코드들...
   startBlackoutLoop(); // 정전 루프 시작!
 };
+  
+let blackoutReady = false;
+
 document.addEventListener('click', () => {
   const audios = document.querySelectorAll('audio');
   audios.forEach(audio => {
     audio.muted = false;
     audio.play().catch(e => console.warn("음악 재생 실패:", e));
   });
+
+  if (!blackoutReady) {
+    blackoutReady = true;
+    startBlackoutLoop(); // 유저 클릭 후 정전 루프 시작
+  }
 }, { once: true });
 
   
