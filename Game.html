@@ -183,22 +183,22 @@ if (box.left > window.innerWidth * 0.6) {
   });
 
   // 성공 판정 함수
-  const timerBar = document.getElementById('timer-bar');
-  let gaugeStartTime = Date.now();
-  const gaugeDuration = 60 * 1000; // 30초
+  // 성공 판정 함수
+const timerBar = document.getElementById('timer-bar');
+let gaugeStartTime = Date.now();
+const gaugeDuration = 90 * 1000; // 90초로 수정됨!
 
-  const gaugeInterval = setInterval(() => {
-    const elapsed = Date.now() - gaugeStartTime;
-    const percent = Math.min(100, (elapsed / gaugeDuration) * 100);
-    timerBar.style.width = percent + '%';
+const gaugeInterval = setInterval(() => {
+  const elapsed = Date.now() - gaugeStartTime;
+  const percent = Math.min(100, (elapsed / gaugeDuration) * 100);
+  timerBar.style.width = percent + '%';
 
-    if (elapsed >= gaugeDuration) {
-      clearInterval(gaugeInterval);
+  if (elapsed >= gaugeDuration) {
+    clearInterval(gaugeInterval);
+    window.location.href = 'Waiting.html';
+  }
+}, 1000);
 
-      // 30초 동안 실패하지 않으면 성공 페이지로 이동
-      window.location.href = 'Waiting.html';
-    }
-  }, 1000); 
 
   function triggerBlackout() {
   const blackout = document.getElementById('blackout-overlay');
