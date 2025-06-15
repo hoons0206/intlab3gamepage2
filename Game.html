@@ -225,23 +225,30 @@
     }
   }, frameRate);
 
-  document.querySelectorAll('.bin').forEach(bin => {
-    bin.addEventListener('click', () => {
-      if (!selectedBox) {
-        alert('먼저 박스를 선택해 주세요!');
-        return;
-      }
+ document.querySelectorAll('.bin').forEach(bin => {
+  bin.addEventListener('click', () => {
+    if (!selectedBox) {
+      alert('먼저 박스를 선택해 주세요!');
+      return;
+    }
 
-      const binType = bin.dataset.type;
-      if (selectedBox.el.dataset.type === binType) {
-        selectedBox.el.remove();
-        boxes.splice(boxes.indexOf(selectedBox), 1);
-        selectedBox = null;
-      } else {
-        alert('박스의 색과 통이 달라요!');
-      }
-    });
+    const binType = bin.dataset.type;
+    // 박스 타입과 상태 모두 일치해야 함
+    if (
+      selectedBox.el.dataset.type === binType &&
+      selectedBox.el.dataset.state === '2'
+    ) {
+      selectedBox.el.remove();
+      boxes.splice(boxes.indexOf(selectedBox), 1);
+      selectedBox = null;
+    } else if (selectedBox.el.dataset.state !== '2') {
+      alert('📦 박스를 닫아야 분류할 수 있어요!');
+    } else {
+      alert('박스의 색과 통이 달라요!');
+    }
   });
+});
+
 </script>
 
 </body>
