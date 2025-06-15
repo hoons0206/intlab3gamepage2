@@ -23,9 +23,12 @@
       transition: border 0.2s;
     }
     .bin {
-      width:80px; margin:10px; cursor:pointer;
+      width: 80px;
+      margin: 10px;
+      cursor: pointer;
     }
   </style>
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -65,12 +68,14 @@
   const speed = 3;
   const frameRate = 1000 / 30;
   const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
-  let finished = false; // 성공/실패 중복 방지
+  let finished = false;
 
-  // 1. 2P 시작 시 기존 데이터 모두 삭제
-  window.addEventListener('load', () => {
-    incomingBoxesRef.remove().then(() => {
-      // 2. 데이터 삭제 후에만 박스 리스너 등록
+  // 안전한 초기화
+  window.addEventListener('load', async () => {
+    try {
+      await incomingBoxesRef.remove(); // 1. 이전 데이터 삭제
+
+      // 2. 삭제 완료 후 리스너 등록
       incomingBoxesRef.on('child_added', snapshot => {
         const data = snapshot.val();
         if (!data || !data.type || !data.state) return;
@@ -103,17 +108,20 @@
         boxes.push(boxObj);
       });
 
-      // 3. 1분 10초(70초) 후 Success.html로 이동
+      // 3. 타이머 성공 조건
       setTimeout(() => {
         if (!finished) {
           finished = true;
           window.location.href = 'Success.html';
         }
       }, 70000);
-    });
+
+    } catch (error) {
+      console.error('초기화 중 오류:', error);
+    }
   });
 
-  // 박스 이동 및 Fail.html 조건
+  // 박스 이동 & 실패 조건
   setInterval(() => {
     if (finished) return;
     for (let i = boxes.length - 1; i >= 0; i--) {
@@ -121,7 +129,6 @@
       box.left += speed;
       box.el.style.left = box.left + 'px';
 
-      // 60% 지점 넘으면 Fail.html
       if (box.left > window.innerWidth * 0.6) {
         if (!finished) {
           finished = true;
@@ -130,7 +137,6 @@
         return;
       }
 
-      // 화면 밖으로 나가면 제거
       if (box.left > window.innerWidth) {
         box.el.remove();
         boxes.splice(i, 1);
@@ -138,7 +144,7 @@
     }
   }, frameRate);
 
-  // bin 클릭 이벤트
+  // 분류 통 클릭 이벤트
   document.querySelectorAll('.bin').forEach(bin => {
     bin.addEventListener('click', () => {
       if (finished) return;
@@ -154,11 +160,12 @@
         selectedBox.el.remove();
         boxes.splice(boxes.indexOf(selectedBox), 1);
         selectedBox = null;
-        // 성공 조건은 타이머에서만 판단
-      } else if (selectedBox.el.dataset.state !== '2') {
-        alert('📦 박스를 닫아야 분류할 수 있어요!');
-      } else {
-        alert('박스의 색과 통이 달라요!');
+        // 성공 여부는 타이머로만 판정
+      } else if (selectedBox.el.dataset.state !== '2') 
+      {
+      } 
+      else {
+
       }
     });
   });
