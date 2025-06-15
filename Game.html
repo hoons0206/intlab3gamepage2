@@ -34,15 +34,6 @@
     .show-color-type2 { background-color: green !important; }
     .show-color-type3 { background-color: blue !important; }
 
-    .back-button {
-      display: inline-block;
-      margin: 10px;
-      padding: 8px 16px;
-      background: #eee;
-      border-radius: 6px;
-      text-decoration: none;
-      color: #222;
-    }
     .shape-sequence-block {
       display: inline-block;
       width: 40px;
@@ -73,14 +64,14 @@
   </script>
 </head>
 <body>
-<a class="back-button" href="About.html">뒤로가기</a>
 <div id="shape-sequence-display"></div>
-<div class="buttons" style="text-align:center; margin-top: 20px;">
-  <button class="start-button" data-type="type1">세모틀</button>
-  <button class="start-button" data-type="type2">네모틀</button>
-  <button class="start-button" data-type="type3">동글틀</button>
-</div>
 <div id="conveyor"></div>
+<div id="bins" style="text-align:center; margin-top: 20px;">
+  <img src="html/media/red_bin.png" id="bin-type1" data-type="type1" class="bin" style="width:80px; margin:10px; cursor:pointer;">
+  <img src="html/media/green_bin.png" id="bin-type2" data-type="type2" class="bin" style="width:80px; margin:10px; cursor:pointer;">
+  <img src="html/media/blue_bin.png" id="bin-type3" data-type="type3" class="bin" style="width:80px; margin:10px; cursor:pointer;">
+  <img src="html/media/yellow_bin.png" id="bin-type4" data-type="type4" class="bin" style="width:80px; margin:10px; cursor:pointer;">
+</div>
 
 <script>
   const conveyor = document.getElementById('conveyor');
@@ -90,6 +81,7 @@
   const frameRate = 1000 / 30;
   const boxes = [];
   let selectedType = null;
+  let selectedBox = null;
 
   const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
   const targetLength = 3;
@@ -110,7 +102,7 @@
     seq.forEach(shape => {
       const div = document.createElement('div');
       div.className = `shape-block shape-${shape}`;
-      div.style.backgroundColor = '#111'; // 항상 검정
+      div.style.backgroundColor = '#111';
       display.appendChild(div);
     });
   }
@@ -123,57 +115,53 @@
 
   resetSequence();
 
-  document.querySelectorAll('.start-button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedType = btn.dataset.type;
-    });
-  });
-
   window.addEventListener("load", () => {
-  db.ref('game/2p_incomingBoxes').remove().then(() => {
-    // remove가 끝난 뒤에만 박스 수신 리스너 실행
-    incomingBoxesRef.on('child_added', snapshot => {
+    incomingBoxesRef.orderByChild('timestamp').on('child_added', snapshot => {
       const boxData = snapshot.val();
       const boxId = snapshot.key;
 
-      const boxEl = document.createElement('div');
-      boxEl.classList.add('box');
-      boxEl.classList.add(`show-color-${boxData.type}`);
-      boxEl.style.left = '-70px';
-      conveyor.appendChild(boxEl);
+      const imgEl = document.createElement('img');
+      imgEl.classList.add('box-img');
+      imgEl.style.left = '-70px';
+
+      const imgMap = {
+        'type1': ['html/media/red1.png', 'html/media/red2.png'],
+        'type2': ['html/media/green1.png', 'html/media/green2.png'],
+        'type3': ['html/media/blue1.png', 'html/media/blue2.png'],
+        'type4': ['html/media/yellow1.png', 'html/media/yellow2.png']
+      };
+
+      const state = boxData.state || '1';
+      imgEl.dataset.type = boxData.type;
+      imgEl.dataset.state = state;
+      imgEl.src = imgMap[boxData.type][state === '2' ? 1 : 0];
+
+      conveyor.appendChild(imgEl);
 
       const boxObj = {
         id: boxId,
-        el: boxEl,
+        el: imgEl,
         left: -70,
         originalType: boxData.type,
         currentType: null
       };
 
-      boxEl.addEventListener('click', () => {
-        if (selectedType) {
-          boxEl.classList.remove('shape-type1', 'shape-type2', 'shape-type3');
-          boxEl.classList.add(`shape-${selectedType}`);
-          boxObj.currentType = selectedType;
-
-          if (selectedType === currentSequence[currentIndex]) {
-            currentIndex++;
-            if (currentIndex >= currentSequence.length) {
-              resetSequence();
-            }
-          } else {
-            window.location.href = 'Fail.html';
-          }
+      imgEl.addEventListener('click', () => {
+        if (imgEl.dataset.state !== '2') {
+          alert('📦 박스를 닫아야 분류할 수 있어요!');
+          return;
         }
+        if (selectedBox && selectedBox.el) {
+          selectedBox.el.style.border = 'none';
+        }
+        selectedBox = boxObj;
+        imgEl.style.border = '3px solid yellow';
       });
 
       boxes.push(boxObj);
     });
   });
-});
 
-
-  // ✅ 박스 이동 루프
   setInterval(() => {
     for (let i = boxes.length - 1; i >= 0; i--) {
       const box = boxes[i];
@@ -181,14 +169,30 @@
       box.el.style.left = box.left + 'px';
 
       if (box.left > window.innerWidth) {
-        if (!box.currentType) {
-          window.location.href = 'Fail.html';
-        }
         box.el.remove();
         boxes.splice(i, 1);
       }
     }
   }, frameRate);
+
+  document.querySelectorAll('.bin').forEach(bin => {
+    bin.addEventListener('click', () => {
+      if (!selectedBox) {
+        alert('먼저 박스를 선택해 주세요!');
+        return;
+      }
+
+      const binType = bin.dataset.type;
+      if (selectedBox.el.dataset.type === binType) {
+        selectedBox.el.remove();
+        boxes.splice(boxes.indexOf(selectedBox), 1);
+        selectedBox = null;
+      } else {
+        alert('박스의 색과 통이 달라요!');
+      }
+    });
+  });
 </script>
+
 </body>
 </html>
