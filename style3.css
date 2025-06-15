@@ -208,7 +208,7 @@ body {
   align-items: flex-end;     /* 이미지들을 우측에 정렬 */
   z-index: 10;
   max-width: 200px;         /* 전체 화면 넘지 않게 */
-  overflow-y: auto;          /* 많아지면 스크롤 */
+  text-align: right;
 }
 
 .bins img {
