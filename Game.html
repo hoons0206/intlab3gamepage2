@@ -65,7 +65,7 @@
   const speed = 3;
   const frameRate = 1000 / 30;
   const incomingBoxesRef = db.ref('game/2p_incomingBoxes');
-  let successTimer = null;
+  let finished = false; // 성공/실패 중복 방지
 
   // 1. 2P 시작 시 기존 데이터 모두 삭제
   window.addEventListener('load', () => {
@@ -102,11 +102,20 @@
         conveyor.appendChild(img);
         boxes.push(boxObj);
       });
+
+      // 3. 1분 10초(70초) 후 Success.html로 이동
+      setTimeout(() => {
+        if (!finished) {
+          finished = true;
+          window.location.href = 'Success.html';
+        }
+      }, 70000);
     });
   });
 
   // 박스 이동 및 Fail.html 조건
   setInterval(() => {
+    if (finished) return;
     for (let i = boxes.length - 1; i >= 0; i--) {
       const box = boxes[i];
       box.left += speed;
@@ -114,7 +123,10 @@
 
       // 60% 지점 넘으면 Fail.html
       if (box.left > window.innerWidth * 0.6) {
-        window.location.href = 'Fail.html';
+        if (!finished) {
+          finished = true;
+          window.location.href = 'Fail.html';
+        }
         return;
       }
 
@@ -129,6 +141,7 @@
   // bin 클릭 이벤트
   document.querySelectorAll('.bin').forEach(bin => {
     bin.addEventListener('click', () => {
+      if (finished) return;
       if (!selectedBox) {
         alert('먼저 박스를 선택해 주세요!');
         return;
@@ -141,14 +154,7 @@
         selectedBox.el.remove();
         boxes.splice(boxes.indexOf(selectedBox), 1);
         selectedBox = null;
-
-        // 모든 박스를 다 넣었으면 2초 후 Success.html
-        if (boxes.length === 0) {
-          if (successTimer) clearTimeout(successTimer);
-          successTimer = setTimeout(() => {
-            window.location.href = 'Success.html';
-          }, 2000);
-        }
+        // 성공 조건은 타이머에서만 판단
       } else if (selectedBox.el.dataset.state !== '2') {
         alert('📦 박스를 닫아야 분류할 수 있어요!');
       } else {
