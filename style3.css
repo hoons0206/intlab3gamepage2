@@ -218,29 +218,24 @@ body {
 
 
 #bins {
-   background-color: rgba(255, 0, 0, 0.1); /* 임시 시각 확인용 */
   position: absolute;
   top: 0;
   right: 0;
   width: 200px;
-  height: 100vh;              /* 디스플레이 높이 100% */
-  margin: 0;
-  padding: 0;
+  height: 100vh;              /* 전체 화면 높이 */
   display: flex;
   flex-direction: column;     /* 수직 정렬 */
-  align-items: flex-end;      /* 우측 정렬 */
-  justify-content: flex-start;/* 위쪽부터 정렬 */
+  align-items: flex-end;      /* 오른쪽 정렬 */
+  justify-content: space-between; /* 이미지 간 고른 간격 */
   z-index: 10;
-  background-color: transparent; /* 디버깅 시 rgba(255,0,0,0.1) 사용 */
-  overflow: hidden;           /* 넘칠 경우 숨기기 (원하면 auto로 바꿈) */
+  background-color: transparent; /* 디버깅 시 rgba(255,0,0,0.1) 가능 */
 }
 
 #bins img {
-  width: 100px;
-  height: 100px;
-  margin: 0;                  /* 여백 제거 */
+  width: 200px;
+  height: 25vh;               /* 화면의 1/4 높이 */
+  object-fit: cover;
+  margin: 0;
   padding: 0;
   cursor: pointer;
-  object-fit: cover;          /* 비율 깨짐 없이 채우기 */
 }
-
