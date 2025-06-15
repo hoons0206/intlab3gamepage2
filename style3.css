@@ -198,6 +198,7 @@ body {
 }
 
 .bins {
+   background-color: rgba(255, 0, 0, 0.1); /* 임시 시각 확인용 */
   position: absolute;
   top: 0;
   right: 0;
