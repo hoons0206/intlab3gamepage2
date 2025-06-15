@@ -257,3 +257,34 @@ body {
     background-color: #4caf50;
     transition: width 1s linear;
   }
+
+
+  #blackout-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  animation: none;
+}
+
+#blackout-overlay.active {
+  animation: blackout-flicker 2s ease-in-out forwards;
+}
+
+@keyframes blackout-flicker {
+  0% { opacity: 0.7; }
+  10% { opacity: 0; }
+  20% { opacity: 0.8; }
+  30% { opacity: 0.2; }
+  40% { opacity: 0.9; }
+  50% { opacity: 0; }
+  60% { opacity: 1; }
+  70% { opacity: 0.5; }
+  80% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
