@@ -171,20 +171,7 @@ body {
     border: 2px solid red;
 }
 
-.box {
-  width: 70px;
-  height: 70px;
-  margin: 10px 120px;
-  display: inline-block;
-  border-radius: 1px;
-  position: absolute;
-  top: 10px;
-  background-color: #403e3e;
-  color: white;
-  font-size: 12px;
-  text-align: center;
-  line-height: 70px;
-}
+
 
   .box-img {
       width: 100px;
