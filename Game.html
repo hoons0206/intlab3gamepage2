@@ -200,30 +200,7 @@ const gaugeInterval = setInterval(() => {
 }, 1000);
 
 
-  function triggerBlackout() {
-  const blackout = document.getElementById('blackout-overlay');
-  const sound = document.getElementById('electric-sound');
-
-  blackout.classList.add('active');
-  sound.play();
-
-  // 박스 클릭 잠시 비활성화
-  document.querySelectorAll('.box-img').forEach(box => {
-    box.style.pointerEvents = 'none';
-  });
-
-  // 3초 후 복구
-  setTimeout(() => {
-    blackout.classList.remove('active');
-    document.querySelectorAll('.box-img').forEach(box => {
-      box.style.pointerEvents = 'auto';
-    });
-  }, 3000);
-}
-
-
-
-function triggerBlackout() {
+ function triggerBlackout() {
   const blackout = document.getElementById('blackout-overlay');
   const sound = document.getElementById('electric-sound');
 
@@ -275,6 +252,7 @@ document.addEventListener('click', () => {
     audio.play().catch(e => console.warn("음악 재생 실패:", e));
   });
 }, { once: true });
+
   
 </script>
 </body>
