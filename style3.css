@@ -207,7 +207,7 @@ body {
   flex-direction: column;    /* 수직 정렬 */
   align-items: flex-end;     /* 이미지들을 우측에 정렬 */
   z-index: 10;
-  max-height: 100vh;         /* 전체 화면 넘지 않게 */
+  max-width: 200px;         /* 전체 화면 넘지 않게 */
   overflow-y: auto;          /* 많아지면 스크롤 */
 }
 
